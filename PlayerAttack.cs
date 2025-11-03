@@ -1,58 +1,109 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class PlayerAttack : MonoBehaviour
 {
-    // A slot to hold the currently equipped weapon's data.
     public WeaponData currentWeapon;
+    private PlayerStats playerStats;
 
+    // --- MELEE/RANGED VARS ---
     private int comboCounter = 0;
     private float lastAttackTime = -999f;
 
-    void Update()
+    // --- LASER VARS ---
+    private bool isLaserActive = false;
+    private LaserAttack activeLaser;
+
+    private void Awake()
     {
-        // First, make sure a weapon is equipped.
-        if (currentWeapon == null)
+        playerStats = GetComponent<PlayerStats>();
+    }
+
+    // This is called by the Input System. It now has different behavior based on the weapon.
+    public void OnAttack(InputValue value)
+    {
+        if (currentWeapon == null) return;
+
+        if (currentWeapon.attackType == AttackType.Laser)
         {
-            return; // Do nothing if there's no weapon.
+            // For lasers, the button press toggles the beam on and off.
+            isLaserActive = value.isPressed;
         }
-
-        // Check for the left mouse click.
-        if (Input.GetMouseButtonDown(0))
+        else // For Melee and Ranged weapons
         {
-            // Check if the attack is off cooldown.
-            if (Time.time >= lastAttackTime + currentWeapon.attackCooldown)
+            // Only trigger on the "press down" action
+            if (value.isPressed)
             {
-                // If too much time has passed since the last attack, reset the combo.
-                if (Time.time > lastAttackTime + currentWeapon.comboResetTime)
+                // Check cooldown from the last attack
+                if (Time.time >= lastAttackTime + currentWeapon.attackCooldown)
                 {
-                    comboCounter = 0;
-                }
+                    // Check for combo reset
+                    if (Time.time > lastAttackTime + currentWeapon.comboResetTime)
+                    {
+                        comboCounter = 0;
+                    }
 
-                Attack();
-                lastAttackTime = Time.time;
+                    PerformMeleeOrRangedAttack();
+                    lastAttackTime = Time.time;
+                }
             }
         }
     }
 
-    void Attack()
+    private void Update()
     {
-        // Make sure the weapon has attack prefabs assigned.
-        if (currentWeapon.attackPrefabs == null || currentWeapon.attackPrefabs.Length == 0)
+        // The laser is a continuous attack that needs to be updated every frame.
+        if (currentWeapon != null && currentWeapon.attackType == AttackType.Laser)
         {
-            Debug.LogError("The current weapon has no attack prefabs assigned!");
-            return;
+            HandleLaserAttack();
+        }
+    }
+
+    private void HandleLaserAttack()
+    {
+        // The first prefab in a laser weapon's list is the laser beam itself.
+        GameObject laserPrefab = currentWeapon.attackPrefabs[0];
+        if (laserPrefab == null) return;
+
+        if (isLaserActive && activeLaser == null)
+        {
+            // If the player wants to fire and there's no active laser, create one.
+            GameObject laserInstance = Instantiate(laserPrefab, transform.position, transform.rotation);
+            activeLaser = laserInstance.GetComponent<LaserAttack>();
+            activeLaser.Initialize(playerStats);
+        }
+        else if (!isLaserActive && activeLaser != null)
+        {
+            // If the player stops firing, destroy the laser.
+            Destroy(activeLaser.gameObject);
+            activeLaser = null;
         }
 
-        // Calculate spawn position using the offset from the weapon data.
-        Vector3 spawnPosition = transform.position + transform.up * currentWeapon.attackOffset;
+        if (activeLaser != null)
+        {
+            // If the laser is active, update its position and direction.
+            activeLaser.UpdateLaser(transform.position, transform.up);
+        }
+    }
 
-        // Instantiate the correct prefab based on the combo count.
-        Instantiate(currentWeapon.attackPrefabs[comboCounter], spawnPosition, transform.rotation);
+    private void PerformMeleeOrRangedAttack()
+    {
+        if (currentWeapon.attackPrefabs == null || currentWeapon.attackPrefabs.Length == 0) return;
 
-        // Advance the combo counter.
+        if (currentWeapon.attackType == AttackType.Ranged)
+        {
+            // Fire the prefab as a projectile
+            Instantiate(currentWeapon.attackPrefabs[comboCounter], transform.position, transform.rotation);
+        }
+        else // Melee
+        {
+            // Spawn the attack visual in front of the player
+            Vector3 spawnPosition = transform.position + transform.up * currentWeapon.attackOffset;
+            Instantiate(currentWeapon.attackPrefabs[comboCounter], spawnPosition, transform.rotation);
+        }
+
+        // Advance the combo counter for the next attack
         comboCounter++;
-
-        // If the combo has reached the end, loop back to the start.
         if (comboCounter >= currentWeapon.attackPrefabs.Length)
         {
             comboCounter = 0;
