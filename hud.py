@@ -14,13 +14,13 @@ class Camera:
 class HUD:
     def __init__(self, player):
         self.player = player
-        self.font = pygame.font.Font(None, 22) # Smaller font for the numbers
+        self.font = pygame.font.Font(None, 22)
         self.bar_length, self.bar_height = 200, 20
         self.bar_margin = 10
 
     def draw(self, surface):
         # --- Health Bar ---
-        health_bar_x = SCREEN_WIDTH - self.bar_length - self.bar_margin
+        health_bar_x = self.bar_margin
         health_bar_y = self.bar_margin
 
         health_ratio = self.player.health / self.player.max_health
@@ -31,7 +31,7 @@ class HUD:
 
         pygame.draw.rect(surface, GREY, health_bar_rect)
         pygame.draw.rect(surface, GREEN, health_fill_rect)
-        pygame.draw.rect(surface, WHITE, health_bar_rect, 2) # Border
+        pygame.draw.rect(surface, WHITE, health_bar_rect, 2)
 
         # --- Energy Bar ---
         energy_bar_y = health_bar_y + self.bar_height + self.bar_margin
@@ -44,7 +44,7 @@ class HUD:
 
         pygame.draw.rect(surface, GREY, energy_bar_rect)
         pygame.draw.rect(surface, BLUE, energy_fill_rect)
-        pygame.draw.rect(surface, WHITE, energy_bar_rect, 2) # Border
+        pygame.draw.rect(surface, WHITE, energy_bar_rect, 2)
 
         # --- Text Display ---
         health_text = f"{int(self.player.health)} / {self.player.max_health}"
@@ -53,7 +53,6 @@ class HUD:
         health_text_surf = self.font.render(health_text, True, WHITE)
         energy_text_surf = self.font.render(energy_text, True, WHITE)
 
-        # Center the text inside their respective bars
         health_text_rect = health_text_surf.get_rect(center=health_bar_rect.center)
         energy_text_rect = energy_text_surf.get_rect(center=energy_bar_rect.center)
 

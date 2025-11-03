@@ -1,92 +1,89 @@
 import pygame
 import sys
 from settings import *
-from player import Player
-from weapon import WEAPONS # Import the dictionary of all weapons
-from hud import HUD, Camera
-from skills import DashSkill
-from projectile import Projectile
+from game_screen import GameScreen
+from ui import Button
+from weapon import WEAPONS # Import the WEAPONS dictionary
 
-class Game:
+class App:
     def __init__(self):
         pygame.init()
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-        pygame.display.set_caption("Top-Down Game")
         self.clock = pygame.time.Clock()
+        self.game_state = 'main_menu'
 
-        self.player = Player(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
-        # --- Easily change the equipped weapon here for testing ---
-        self.player.current_weapon = WEAPONS["staff"]
+        self.game_screen = None
+        self.selected_weapon = "sword" # Default weapon
 
-        self.player.skills["dash"] = DashSkill(self.player)
+        # --- Menu Buttons ---
+        self.play_button = Button(SCREEN_WIDTH/2 - 100, SCREEN_HEIGHT/2 - 60, 200, 50, 'Play')
+        self.settings_button = Button(SCREEN_WIDTH/2 - 100, SCREEN_HEIGHT/2, 200, 50, 'Settings')
+        self.quit_button = Button(SCREEN_WIDTH/2 - 100, SCREEN_HEIGHT/2 + 60, 200, 50, 'Quit')
+        self.menu_buttons = [self.play_button, self.settings_button, self.quit_button]
 
-        self.camera = Camera(2000, 2000)
-        self.hud = HUD(self.player)
-
-        self.attack_sprites = pygame.sprite.Group()
-        self.projectile_sprites = pygame.sprite.Group()
+        # --- Loadout Buttons ---
+        self.loadout_buttons = []
+        button_y = SCREEN_HEIGHT / 4
+        for weapon_key in WEAPONS.keys():
+            button = Button(SCREEN_WIDTH / 2 - 150, button_y, 300, 50, weapon_key.title())
+            self.loadout_buttons.append(button)
+            button_y += 60
 
     def run(self):
-        running = True
-        is_attacking = False # To track continuous input for the laser
+        while True:
+            if self.game_state == 'main_menu':
+                self.game_state = self.main_menu_loop()
+            elif self.game_state == 'loadout_selection':
+                self.game_state = self.loadout_loop()
+            elif self.game_state == 'gameplay':
+                # Create a new game screen instance each time we play
+                self.game_screen = GameScreen(self.screen, self.clock)
+                self.game_screen.set_weapon(self.selected_weapon)
+                self.game_state = self.game_screen.run()
+            elif self.game_state == 'quit':
+                pygame.quit()
+                sys.exit()
 
-        while running:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
+    def main_menu_loop(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT: return 'quit'
+            if self.play_button.handle_event(event): return 'loadout_selection'
+            if self.settings_button.handle_event(event): pass # Placeholder
+            if self.quit_button.handle_event(event): return 'quit'
 
-                # --- Handle Attack Input ---
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    if event.button == 1: # Left click press
-                        is_attacking = True
-                        # For non-laser weapons, attack is called once here
-                        if self.player.current_weapon.attack_type != 'LASER':
-                            self.player.attack(self.attack_sprites, self.projectile_sprites, True)
-
-                if event.type == pygame.MOUSEBUTTONUP:
-                    if event.button == 1: # Left click release
-                        is_attacking = False
-
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_q:
-                        self.player.activate_skill("dash")
-
-            # --- For continuous attacks like the laser ---
-            if self.player.current_weapon.attack_type == 'LASER':
-                self.player.attack(self.attack_sprites, self.projectile_sprites, is_attacking)
-
-            self.update()
-            self.draw()
-
-        pygame.quit()
-        sys.exit()
-
-    def update(self):
-        keys = pygame.key.get_pressed()
-        mouse_screen_pos = pygame.mouse.get_pos()
-        mouse_world_pos = (mouse_screen_pos[0] - self.camera.camera.x, mouse_screen_pos[1] - self.camera.camera.y)
-
-        self.player.handle_input(keys, mouse_world_pos)
-        self.player.update()
-
-        self.camera.update(self.player.rect)
-        self.attack_sprites.update()
-        self.projectile_sprites.update()
-
-    def draw(self):
         self.screen.fill(BLACK)
-
-        self.screen.blit(self.player.image, self.camera.apply(self.player.rect))
-        for sprite in self.attack_sprites:
-            self.screen.blit(sprite.image, self.camera.apply(sprite.rect))
-        for sprite in self.projectile_sprites:
-            self.screen.blit(sprite.image, self.camera.apply(sprite.rect))
-
-        self.hud.draw(self.screen)
-
+        font = pygame.font.Font(None, 70)
+        title_surf = font.render("My Game", True, WHITE)
+        title_rect = title_surf.get_rect(center=(SCREEN_WIDTH/2, SCREEN_HEIGHT/4))
+        self.screen.blit(title_surf, title_rect)
+        for button in self.menu_buttons:
+            button.draw(self.screen)
         pygame.display.flip()
         self.clock.tick(FPS)
+        return 'main_menu'
+
+    def loadout_loop(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT: return 'quit'
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                return 'main_menu' # Go back to main menu
+
+            for i, button in enumerate(self.loadout_buttons):
+                if button.handle_event(event):
+                    self.selected_weapon = list(WEAPONS.keys())[i]
+                    return 'gameplay'
+
+        self.screen.fill(BLACK)
+        font = pygame.font.Font(None, 50)
+        title_surf = font.render("Choose Your Weapon", True, WHITE)
+        title_rect = title_surf.get_rect(center=(SCREEN_WIDTH/2, 100))
+        self.screen.blit(title_surf, title_rect)
+        for button in self.loadout_buttons:
+            button.draw(self.screen)
+        pygame.display.flip()
+        self.clock.tick(FPS)
+        return 'loadout_selection'
 
 if __name__ == "__main__":
-    game = Game()
-    game.run()
+    app = App()
+    app.run()
