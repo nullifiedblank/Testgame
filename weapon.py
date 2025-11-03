@@ -1,4 +1,5 @@
 import pygame
+import math
 from settings import *
 from projectile import Projectile # Import the new projectile class
 
@@ -32,8 +33,8 @@ class Laser(pygame.sprite.Sprite):
 
     def update(self):
         self.image = pygame.transform.rotate(self.image_orig, self.player.angle)
-        angle_rad = pygame.math.radians(self.player.angle + 90)
-        offset = pygame.math.Vector2(pygame.math.cos(angle_rad), -pygame.math.sin(angle_rad)) * 500
+        angle_rad = math.radians(self.player.angle + 90)
+        offset = pygame.math.Vector2(math.cos(angle_rad), -math.sin(angle_rad)) * 500
         self.rect = self.image.get_rect(center=self.player.pos + offset)
 
         if pygame.time.get_ticks() - self.spawn_time > self.lifetime:
