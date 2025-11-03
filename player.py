@@ -4,13 +4,15 @@ from settings import *
 
 class Player:
     def __init__(self, x, y):
-        # ... (init code is unchanged) ...
+        # --- Visuals ---
         self.image_orig = pygame.Surface((40, 40), pygame.SRCALPHA)
         pygame.draw.polygon(self.image_orig, RED, [(0, 40), (20, 0), (40, 40)])
         self.image = self.image_orig
         self.pos = pygame.math.Vector2(x, y)
         self.rect = self.image.get_rect(center=self.pos)
         self.angle = 0
+
+        # --- Stats ---
         self.speed = 5
         self.max_health = 200
         self.health = self.max_health
@@ -19,24 +21,30 @@ class Player:
         self.energy_regen_rate = 5
         self.energy_regen_interval = 2000
         self.last_regen_time = 0
+
+        # --- Weapon & Attack ---
         self.current_weapon = None
         self.combo_counter = 0
         self.last_attack_time = 0
+
+        # --- Skills ---
         self.skills = {}
         self.is_dashing = False
         self.is_invulnerable = False
 
     def handle_input(self, keys, mouse_pos):
-        # ... (unchanged) ...
         if self.is_dashing: return
+
         move_vector = pygame.math.Vector2(0, 0)
         if keys[pygame.K_w]: move_vector.y -= 1
         if keys[pygame.K_s]: move_vector.y += 1
         if keys[pygame.K_a]: move_vector.x -= 1
         if keys[pygame.K_d]: move_vector.x += 1
+
         if move_vector.length() > 0:
             move_vector.normalize_ip()
             self.pos += move_vector * self.speed
+
         dx, dy = mouse_pos[0] - self.pos.x, mouse_pos[1] - self.pos.y
         self.angle = math.degrees(math.atan2(-dy, dx)) - 90
         self.image = pygame.transform.rotate(self.image_orig, self.angle)
@@ -47,19 +55,17 @@ class Player:
 
         current_time = pygame.time.get_ticks()
 
-        # --- Handle different attack types ---
         if self.current_weapon.attack_type == 'LASER':
             if is_attacking and self.energy > 0:
                 if current_time - self.last_attack_time > self.current_weapon.attack_cooldown:
-                    self.energy -= 2 # Energy cost per laser segment
+                    self.energy -= 2
                     attack_data = self.current_weapon.attack_prefabs[0]
                     laser_sprite = self.current_weapon.attack_sprite_class(player=self, **attack_data)
                     attack_sprites_group.add(laser_sprite)
                     self.last_attack_time = current_time
-            return # Laser logic is continuous, so we exit here
+            return
 
-        # --- Melee and Ranged are triggered on a single press, not hold ---
-        if not is_attacking: return # This ensures we only attack on the MOUSEBUTTONDOWN event
+        if not is_attacking: return
 
         if current_time - self.last_attack_time < self.current_weapon.attack_cooldown: return
 
@@ -76,7 +82,6 @@ class Player:
             attack_sprites_group.add(attack_sprite)
 
         elif self.current_weapon.attack_type == 'RANGED':
-            # Pass the angle to the projectile constructor
             projectile = self.current_weapon.attack_sprite_class(pos=self.pos, angle=self.angle, **attack_data)
             projectile_group.add(projectile)
 
@@ -100,10 +105,3 @@ class Player:
         if current_time - self.last_regen_time > self.energy_regen_interval:
             self.last_regen_time = current_time
             self.energy = min(self.max_energy, self.energy + self.energy_regen_rate)
-
-    # --- We need to add back the empty dash methods for the skill system ---
-    def dash(self): # This is just a placeholder now
-        pass
-
-    def handle_dashing(self): # This is now handled by the skill
-        pass
