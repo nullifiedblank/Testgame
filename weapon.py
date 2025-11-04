@@ -3,9 +3,6 @@ import math
 from projectile import Projectile
 from settings import RED
 
-# WeaponAnimation, HeldWeapon, Laser classes are here, but are unchanged in this step
-# They no longer need to import ASSETS or load images
-
 class WeaponAnimation:
     def __init__(self, weapon_sprite, anim_data, hittable_sprites):
         self.weapon_sprite = weapon_sprite; self.anim_data = anim_data; self.hittable_sprites = hittable_sprites
@@ -28,6 +25,7 @@ class WeaponAnimation:
             if hasattr(sprite, 'health') and sprite not in self.hit_targets:
                 sprite.health.take_damage(self.anim_data.get('damage', 0))
                 self.hit_targets.append(sprite)
+
 class HeldWeapon(pygame.sprite.Sprite):
     def __init__(self, player, image):
         super().__init__(); self.player = player; self.image_orig = image; self.image = self.image_orig
@@ -37,25 +35,23 @@ class HeldWeapon(pygame.sprite.Sprite):
     def set_anim_offset(self, offset_val): self.anim_pos_offset = pygame.math.Vector2(offset_val, 0)
     def update(self, *args, **kwargs):
         self.base_angle = self.player.angle; final_angle = self.base_angle + self.anim_angle_offset
-        unrotated_rect = self.image_orig.get_rect(bottomleft=self.player.rect.center)
         self.image = pygame.transform.rotate(self.image_orig, final_angle)
-        self.rect = self.image.get_rect(center=unrotated_rect.center)
+        self.rect = self.image.get_rect()
+        self.rect.bottomleft = self.player.rect.center
         self.mask = pygame.mask.from_surface(self.image)
         rotated_pos_offset = self.anim_pos_offset.rotate(-self.base_angle)
         self.rect.move_ip(rotated_pos_offset)
+
 class Laser(pygame.sprite.Sprite):
     def __init__(self, player, lifetime, damage):
         super().__init__(); self.player = player; self.lifetime = lifetime; self.damage = damage
-        self.spawn_time = pygame.time.get_ticks(); self.image_orig = pygame.Surface((5, 1000), pygame.SRCALPHA)
-        pygame.draw.rect(self.image_orig, RED, (0,0,5,1000)); self.image = self.image_orig; self.rect = self.image.get_rect(midbottom=player.rect.center)
+        self.spawn_time = pygame.time.get_ticks()
     def update(self, hittable_sprites):
-        self.image = pygame.transform.rotate(self.image_orig, self.player.angle)
-        angle_rad = math.radians(self.player.angle + 90)
-        offset = pygame.math.Vector2(math.cos(angle_rad), -math.sin(angle_rad)) * 500
-        self.rect = self.image.get_rect(center=self.player.pos + offset)
-        collided_sprites = pygame.sprite.spritecollide(self, hittable_sprites, False)
+        end_pos = self.player.pos + pygame.math.Vector2(1, 0).rotate(-self.player.angle) * 2000
+        collided_sprites = pygame.sprite.spritecollide(self.player, hittable_sprites, False, pygame.sprite.collide_line((self.player.pos.x, self.player.pos.y), (end_pos.x, end_pos.y)))
         for sprite in collided_sprites:
-            if hasattr(sprite, 'health'): sprite.health.take_damage(self.damage * 0.1)
+            if hasattr(sprite, 'health'):
+                sprite.health.take_damage(self.damage * 0.1)
         if pygame.time.get_ticks() - self.spawn_time > self.lifetime: self.kill()
 
 class WeaponData:

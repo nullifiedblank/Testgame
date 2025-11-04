@@ -37,7 +37,6 @@ class Player:
         self.held_weapon = HeldWeapon(self, self.asset_manager.get(self.weapon.held_image_path))
         sprite_group.add(self.held_weapon)
 
-    # ... (handle_input is unchanged) ...
     def handle_input(self, keys, mouse_pos):
         if self.is_dashing: return
         move_vector = pygame.math.Vector2(0, 0)
@@ -58,11 +57,29 @@ class Player:
         current_time = pygame.time.get_ticks()
 
         # Ranged Charge (Bow)
-        if self.weapon.attack_type == 'RANGED' and 'bow_draw_image' in self.weapon.extra_assets_paths:
-            # This logic is now in update, triggered by is_attacking
-            pass
-        elif not is_attacking: return
+        if 'bow_draw_image' in self.weapon.extra_assets_paths:
+            if is_attacking and self.bow_anim_stage == 0 and current_time - self.last_attack_time > self.weapon.attack_cooldown:
+                self.bow_anim_stage = 1
+                self.bow_anim_timer = current_time
+                self.held_weapon.image_orig = self.asset_manager.get(self.weapon.extra_assets_paths['bow_empty_image'])
+                attack_data = self.weapon.attack_data[0].copy()
+                attack_data['image'] = self.asset_manager.get(attack_data.pop('image_path'))
+                projectile = self.weapon.attack_sprite_class(pos=self.pos, angle=self.angle, **attack_data)
+                projectile_group.add(projectile)
+                self.last_attack_time = current_time
+            return
 
+        # Laser
+        if self.weapon.attack_type == 'LASER':
+            if is_attacking and self.energy > 0:
+                if current_time - self.last_attack_time > self.weapon.attack_cooldown:
+                    self.energy -= 2
+                    laser_sprite = self.weapon.attack_sprite_class(player=self, **self.weapon.attack_data[0])
+                    hittable_sprites.add(laser_sprite)
+                    self.last_attack_time = current_time
+            return
+
+        if not is_attacking: return
         if current_time - self.last_attack_time < self.weapon.attack_cooldown: return
         if current_time - self.last_attack_time > self.weapon.combo_reset_time:
             self.combo_counter = 0
@@ -71,17 +88,18 @@ class Player:
 
         if self.weapon.attack_type == 'MELEE':
             self.active_animation = WeaponAnimation(self.held_weapon, attack_data, hittable_sprites)
+
         elif self.weapon.attack_type == 'RANGED':
-            attack_data['image'] = self.asset_manager.get(attack_data['image_path'])
+            attack_data['image'] = self.asset_manager.get(attack_data.pop('image_path'))
             projectile = self.weapon.attack_sprite_class(pos=self.pos, angle=self.angle, **attack_data)
             projectile_group.add(projectile)
 
         self.last_attack_time = current_time
         self.combo_counter = (self.combo_counter + 1) % len(self.weapon.attack_data)
 
-    # ... (rest of player class is unchanged) ...
     def activate_skill(self, skill_name):
         if skill_name in self.skills: self.skills[skill_name].activate()
+
     def update(self):
         self.handle_energy_regen()
         self.update_skills()
@@ -92,12 +110,20 @@ class Player:
                 self.active_animation = None
                 self.held_weapon.set_anim_rotation(0); self.held_weapon.set_anim_offset(0)
         self.rect.center = self.pos
+
     def handle_bow_animation(self):
-        if not self.weapon or 'bow_draw_image' not in self.weapon.extra_assets_paths: return
+        if self.bow_anim_stage == 0: return
         current_time = pygame.time.get_ticks()
-        # ... (bow animation logic)
+        if self.bow_anim_stage == 1 and current_time - self.bow_anim_timer > 150:
+            self.held_weapon.image_orig = self.asset_manager.get(self.weapon.extra_assets_paths['bow_draw_image'])
+            self.bow_anim_stage = 2
+        elif self.bow_anim_stage == 2 and current_time - self.bow_anim_timer > 400:
+            self.held_weapon.image_orig = self.asset_manager.get(self.weapon.held_image_path)
+            self.bow_anim_stage = 0
+
     def update_skills(self):
         for skill in self.skills.values(): skill.update()
+
     def handle_energy_regen(self):
         current_time = pygame.time.get_ticks()
         if current_time - self.last_regen_time > self.energy_regen_interval:
