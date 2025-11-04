@@ -1,19 +1,27 @@
 import pygame
 import sys
+import os
 from settings import *
 from game_screen import GameScreen
 from ui import Button
-from weapon import WEAPONS # Import the WEAPONS dictionary
+from weapon import WEAPONS
+from assets import init_assets # Import the new asset initializer
+
+# --- DEBUG: Print Current Working Directory ---
+# print(f"Current Working Directory: {os.getcwd()}")
+# print(f"Looking for assets folder in the above directory.")
+# ----------------------------------------------
 
 class App:
     def __init__(self):
         pygame.init()
+        init_assets() # Initialize all assets after pygame is ready
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         self.clock = pygame.time.Clock()
         self.game_state = 'main_menu'
 
         self.game_screen = None
-        self.selected_weapon = "sword" # Default weapon
+        self.selected_weapon = "sword"
 
         # --- Menu Buttons ---
         self.play_button = Button(SCREEN_WIDTH/2 - 100, SCREEN_HEIGHT/2 - 60, 200, 50, 'Play')
@@ -36,7 +44,6 @@ class App:
             elif self.game_state == 'loadout_selection':
                 self.game_state = self.loadout_loop()
             elif self.game_state == 'gameplay':
-                # Create a new game screen instance each time we play
                 self.game_screen = GameScreen(self.screen, self.clock)
                 self.game_screen.set_weapon(self.selected_weapon)
                 self.game_state = self.game_screen.run()
@@ -44,13 +51,13 @@ class App:
                 pygame.quit()
                 sys.exit()
 
+    # ... (rest of main.py is unchanged) ...
     def main_menu_loop(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT: return 'quit'
             if self.play_button.handle_event(event): return 'loadout_selection'
-            if self.settings_button.handle_event(event): pass # Placeholder
+            if self.settings_button.handle_event(event): pass
             if self.quit_button.handle_event(event): return 'quit'
-
         self.screen.fill(BLACK)
         font = pygame.font.Font(None, 70)
         title_surf = font.render("My Game", True, WHITE)
@@ -61,18 +68,15 @@ class App:
         pygame.display.flip()
         self.clock.tick(FPS)
         return 'main_menu'
-
     def loadout_loop(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT: return 'quit'
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                return 'main_menu' # Go back to main menu
-
+                return 'main_menu'
             for i, button in enumerate(self.loadout_buttons):
                 if button.handle_event(event):
                     self.selected_weapon = list(WEAPONS.keys())[i]
                     return 'gameplay'
-
         self.screen.fill(BLACK)
         font = pygame.font.Font(None, 50)
         title_surf = font.render("Choose Your Weapon", True, WHITE)
