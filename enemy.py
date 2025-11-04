@@ -2,21 +2,21 @@ import pygame
 import math
 from settings import *
 from health import Health
-from assets import ASSETS, load_image # Import from the correct module
 
 class Turret(pygame.sprite.Sprite):
-    def __init__(self, x, y, player):
+    def __init__(self, x, y, player, asset_manager):
         super().__init__()
         self.player = player
-        self.image_orig = load_image('assets/enemies/turret.png')
+        self.asset_manager = asset_manager
+        self.image_orig = self.asset_manager.get('assets/enemies/turret.png')
         self.image = self.image_orig
         self.pos = pygame.math.Vector2(x, y)
         self.rect = self.image.get_rect(center=self.pos)
         self.angle = 0
 
-        self.health = Health(self, 50) # Give the turret 50 HP
+        self.health = Health(self, 50)
 
-        self.fire_rate = 2000 # Shoots every 2 seconds
+        self.fire_rate = 2000
         self.last_shot_time = 0
 
     def update(self, projectile_group):
@@ -34,15 +34,13 @@ class Turret(pygame.sprite.Sprite):
         if current_time - self.last_shot_time > self.fire_rate:
             self.last_shot_time = current_time
 
-            # Create a simple projectile. We'll need a projectile class for enemies.
-            # For now, let's borrow the player's projectile class.
             from projectile import Projectile
 
             attack_data = {
-                "image": ASSETS['assets/projectiles/enemy_bullet.png'],
+                "image": self.asset_manager.get('assets/projectiles/enemy_bullet.png'),
                 "speed": 10,
                 "lifetime": 5000,
-                "damage": 5 # Give it some damage
+                "damage": 5
             }
 
             projectile = Projectile(pos=self.pos, angle=self.angle, **attack_data)

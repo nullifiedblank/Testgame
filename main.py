@@ -5,19 +5,20 @@ from settings import *
 from game_screen import GameScreen
 from ui import Button
 from weapon import WEAPONS
-from assets import init_assets # Import the new asset initializer
-
-# --- DEBUG: Print Current Working Directory ---
-# print(f"Current Working Directory: {os.getcwd()}")
-# print(f"Looking for assets folder in the above directory.")
-# ----------------------------------------------
+from assets import AssetManager
 
 class App:
     def __init__(self):
         pygame.init()
-        init_assets() # Initialize all assets after pygame is ready
+
+        # --- Pygame Setup ---
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         self.clock = pygame.time.Clock()
+
+        # --- Asset Loading ---
+        # This MUST be called after the display is set
+        self.asset_manager = AssetManager()
+        self.asset_manager.load_assets()
         self.game_state = 'main_menu'
 
         self.game_screen = None
@@ -44,7 +45,8 @@ class App:
             elif self.game_state == 'loadout_selection':
                 self.game_state = self.loadout_loop()
             elif self.game_state == 'gameplay':
-                self.game_screen = GameScreen(self.screen, self.clock)
+                # Pass the asset manager to the game screen
+                self.game_screen = GameScreen(self.screen, self.clock, self.asset_manager)
                 self.game_screen.set_weapon(self.selected_weapon)
                 self.game_state = self.game_screen.run()
             elif self.game_state == 'quit':
