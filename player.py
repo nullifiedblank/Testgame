@@ -51,7 +51,7 @@ class Player:
 
     def attack(self, projectile_group, is_attacking):
         # ... (most of attack is unchanged) ...
-        if not self.weapon or self.is_dashing or self.active_animation: return
+        if not self.weapon or self.is_dashing or self.active_animation or self.bow_anim_stage != 0: return
         current_time = pygame.time.get_ticks()
         if self.weapon.attack_type == 'LASER': return
         if not is_attacking: return
@@ -61,9 +61,9 @@ class Player:
 
         # --- Handle Bow Animation ---
         if self.weapon.attack_type == 'RANGED' and 'bow_draw_image' in self.weapon.extra_assets:
-            self.bow_anim_stage = 1 # Start the animation
+            self.bow_anim_stage = 1 # Start animation: switch to empty
             self.bow_anim_timer = current_time
-            self.held_weapon.image_orig = self.weapon.extra_assets['bow_draw_image']
+            self.held_weapon.image_orig = self.weapon.extra_assets['bow_empty_image']
 
             # Fire projectile immediately
             attack_data = self.weapon.attack_data[0].copy()
@@ -85,7 +85,6 @@ class Player:
         self.last_attack_time = current_time
         self.combo_counter = (self.combo_counter + 1) % len(self.weapon.attack_data)
 
-
     def activate_skill(self, skill_name):
         if skill_name in self.skills: self.skills[skill_name].activate()
 
@@ -98,20 +97,20 @@ class Player:
             if self.active_animation.is_done:
                 self.active_animation = None
                 self.held_weapon.set_anim_rotation(0); self.held_weapon.set_anim_offset(0)
-
         self.rect.center = self.pos
 
     def handle_bow_animation(self):
         if self.bow_anim_stage == 0: return
 
         current_time = pygame.time.get_ticks()
-        if self.bow_anim_stage == 1 and current_time - self.bow_anim_timer > 100: # After 100ms, switch to empty
-            self.held_weapon.image_orig = self.weapon.extra_assets['bow_empty_image']
+        # Stage 1: from EMPTY to DRAW
+        if self.bow_anim_stage == 1 and current_time - self.bow_anim_timer > 150: # After 150ms
+            self.held_weapon.image_orig = self.weapon.extra_assets['bow_draw_image']
             self.bow_anim_stage = 2
-        elif self.bow_anim_stage == 2 and current_time - self.bow_anim_timer > 300: # After 300ms total, switch back to idle
+        # Stage 2: from DRAW to IDLE
+        elif self.bow_anim_stage == 2 and current_time - self.bow_anim_timer > 400: # After 400ms total
             self.held_weapon.image_orig = self.weapon.held_image
             self.bow_anim_stage = 0
-
 
     def update_skills(self):
         for skill in self.skills.values(): skill.update()
