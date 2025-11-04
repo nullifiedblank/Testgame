@@ -53,8 +53,8 @@ class HeldWeapon(pygame.sprite.Sprite):
         # 1. Rotate the image
         self.image = pygame.transform.rotate(self.image_orig, final_angle)
 
-        # 2. Calculate the vector from the image's center to the center of its left edge
-        pivot_offset = pygame.math.Vector2(-self.image_orig.get_width() / 2, 0)
+        # 2. Calculate the vector from the image's center to its bottom-left corner
+        pivot_offset = pygame.math.Vector2(-self.image_orig.get_width() / 2, self.image_orig.get_height() / 2)
 
         # 3. Rotate that offset vector by the final angle
         rotated_pivot_offset = pivot_offset.rotate(-final_angle)
