@@ -53,14 +53,14 @@ class HeldWeapon(pygame.sprite.Sprite):
         # 1. Rotate the image
         self.image = pygame.transform.rotate(self.image_orig, final_angle)
 
-        # 2. Calculate the vector from the image's center to its bottom-left corner
-        pivot_offset = pygame.math.Vector2(-self.image_orig.get_width() / 2, self.image_orig.get_height() / 2)
+        # 2. Calculate the vector from the image's center to the center of the bottom-left quadrant
+        pivot_offset = pygame.math.Vector2(-self.image_orig.get_width() / 4, self.image_orig.get_height() / 4)
 
         # 3. Rotate that offset vector by the final angle
         rotated_pivot_offset = pivot_offset.rotate(-final_angle)
 
-        # 4. The new center of the rect is the player's center plus the rotated pivot offset
-        self.rect = self.image.get_rect(center=self.player.rect.center + rotated_pivot_offset)
+        # 4. The new center of the rect is the player's center minus the rotated pivot offset
+        self.rect = self.image.get_rect(center=self.player.rect.center - rotated_pivot_offset)
 
         # Update mask and apply animation offset as before
         self.mask = pygame.mask.from_surface(self.image)
