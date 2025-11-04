@@ -15,7 +15,8 @@ class GameScreen:
         self.player = Player(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
         self.player.skills["dash"] = DashSkill(self.player)
 
-        self.camera = Camera(2000, 2000)
+        # We are not using the camera for this test
+        # self.camera = Camera(2000, 2000)
         self.hud = HUD(self.player)
 
         self.attack_sprites = pygame.sprite.Group()
@@ -29,7 +30,6 @@ class GameScreen:
         is_attacking = False
 
         while running:
-            # --- Event Loop ---
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     return 'main_menu'
@@ -50,36 +50,34 @@ class GameScreen:
                     if event.key == pygame.K_ESCAPE:
                         return 'main_menu'
 
-            # --- Input Polling (for continuous movement) ---
             keys = pygame.key.get_pressed()
-
-            # --- Updates ---
             self.update(keys, is_attacking)
             self.draw()
 
     def update(self, keys, is_attacking):
         mouse_screen_pos = pygame.mouse.get_pos()
-        mouse_world_pos = (mouse_screen_pos[0] - self.camera.camera.x, mouse_screen_pos[1] - self.camera.camera.y)
+        # With no camera, world position is the same as screen position
+        mouse_world_pos = mouse_screen_pos
 
         self.player.handle_input(keys, mouse_world_pos)
         self.player.update()
 
-        # Continuous attack logic (for laser)
         if self.player.current_weapon and self.player.current_weapon.attack_type == 'LASER':
             self.player.attack(self.attack_sprites, self.projectile_sprites, is_attacking)
 
-        self.camera.update(self.player.rect)
+        # self.camera.update(self.player.rect)
         self.attack_sprites.update()
         self.projectile_sprites.update()
 
     def draw(self):
         self.screen.fill(BLACK)
 
-        self.screen.blit(self.player.image, self.camera.apply(self.player.rect))
+        # Draw all sprites directly to the screen (no camera offset)
+        self.screen.blit(self.player.image, self.player.rect)
         for sprite in self.attack_sprites:
-            self.screen.blit(sprite.image, self.camera.apply(sprite.rect))
+            self.screen.blit(sprite.image, sprite.rect)
         for sprite in self.projectile_sprites:
-            self.screen.blit(sprite.image, self.camera.apply(sprite.rect))
+            self.screen.blit(sprite.image, sprite.rect)
 
         self.hud.draw(self.screen)
 
