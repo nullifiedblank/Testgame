@@ -53,8 +53,8 @@ class HeldWeapon(pygame.sprite.Sprite):
         # 1. Rotate the image
         self.image = pygame.transform.rotate(self.image_orig, final_angle)
 
-        # 2. Calculate the vector from the image's center to its bottom-left corner
-        pivot_offset = pygame.math.Vector2(-self.image_orig.get_width() / 2, self.image_orig.get_height() / 2)
+        # 2. Calculate the vector from the image's center to the center of its left edge
+        pivot_offset = pygame.math.Vector2(-self.image_orig.get_width() / 2, 0)
 
         # 3. Rotate that offset vector by the final angle
         rotated_pivot_offset = pivot_offset.rotate(-final_angle)
@@ -81,8 +81,8 @@ class Laser(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(center=player.pos)
     def update(self, hittable_sprites):
         start_pos = self.player.pos
-        angle_rad = math.radians(self.player.angle)
-        end_pos = start_pos + pygame.math.Vector2(math.cos(angle_rad), math.sin(angle_rad)) * 2000
+        angle_rad = math.radians(self.player.angle + 90)
+        end_pos = start_pos + pygame.math.Vector2(math.cos(angle_rad), -math.sin(angle_rad)) * 2000
         for sprite in hittable_sprites:
             if hasattr(sprite, 'health') and sprite.rect.clipline(start_pos, end_pos):
                 sprite.health.take_damage(self.damage * 0.1)

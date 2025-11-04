@@ -47,8 +47,8 @@ class Player:
         if move_vector.length() > 0:
             move_vector.normalize_ip(); self.pos += move_vector * self.speed
         dx, dy = mouse_pos[0] - self.pos.x, mouse_pos[1] - self.pos.y
-        # The angle for rotation no longer needs an offset.
-        self.angle = math.degrees(math.atan2(-dy, dx))
+        # The angle for rotation needs the offset.
+        self.angle = math.degrees(math.atan2(-dy, dx)) - 90
 
         # The angle for flipping should be raw, without the offset.
         raw_angle = math.degrees(math.atan2(-dy, dx))
@@ -58,7 +58,7 @@ class Player:
              self.image = self.image_right
         self.rect.center = self.pos
 
-    def attack(self, hittable_sprites, projectile_group, is_attacking):
+    def attack(self, all_sprites, hittable_sprites, projectile_group, is_attacking):
         if not self.weapon or self.is_dashing or (self.active_animation and not self.active_animation.is_done): return
         current_time = pygame.time.get_ticks()
 
@@ -81,7 +81,7 @@ class Player:
                 if current_time - self.last_attack_time > self.weapon.attack_cooldown:
                     self.energy -= 2
                     laser_sprite = self.weapon.attack_sprite_class(player=self, **self.weapon.attack_data[0])
-                    hittable_sprites.add(laser_sprite)
+                    all_sprites.add(laser_sprite)
                     self.last_attack_time = current_time
             return
 

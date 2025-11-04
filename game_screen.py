@@ -51,7 +51,7 @@ class GameScreen:
                     if event.button == 1:
                         is_attacking = True
                         if self.player.weapon and self.player.weapon.attack_type != 'LASER':
-                            self.player.attack(self.enemy_sprites, self.projectile_sprites, True)
+                            self.player.attack(self.all_sprites, self.enemy_sprites, self.projectile_sprites, True)
                 if event.type == pygame.MOUSEBUTTONUP:
                     if event.button == 1: is_attacking = False
                 if event.type == pygame.KEYDOWN:
@@ -68,7 +68,7 @@ class GameScreen:
         self.player.handle_input(keys, mouse_world_pos)
         self.player.update()
         if self.player.weapon and self.player.weapon.attack_type in ['LASER', 'RANGED_CHARGE']:
-            self.player.attack(self.enemy_sprites, self.projectile_sprites, is_attacking)
+            self.player.attack(self.all_sprites, self.enemy_sprites, self.projectile_sprites, is_attacking)
         self.camera.update(self.player.rect)
         self.all_sprites.update(self.enemy_sprites)
         self.projectile_sprites.update(self.enemy_sprites)
