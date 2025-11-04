@@ -53,7 +53,6 @@ class Laser(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(center=self.player.pos + offset)
         if pygame.time.get_ticks() - self.spawn_time > self.lifetime: self.kill()
 
-# --- Weapon Data Structure ---
 class WeaponData:
     def __init__(self, held_image_path, attack_type, attack_cooldown, combo_reset_time, attack_data, attack_sprite_class=None, **kwargs):
         self.held_image = load_image(held_image_path)
@@ -62,7 +61,6 @@ class WeaponData:
         self.combo_reset_time = combo_reset_time
         self.attack_data = [{'image': load_image(p['image_path']), **p} if 'image_path' in p else p for p in attack_data]
         self.attack_sprite_class = attack_sprite_class
-        # Store extra data, like images for the bow
         self.extra_assets = {k: load_image(v) for k, v in kwargs.items()}
 
 # --- ======================= WEAPON DEFINITIONS ======================= ---
@@ -70,12 +68,13 @@ sword_weapon = WeaponData( held_image_path="assets/weapons/sword.png", attack_ty
 spear_weapon = WeaponData( held_image_path="assets/weapons/spear.png", attack_type='MELEE', attack_cooldown=300, combo_reset_time=700, attack_data=[ {'type': 'thrust', 'duration': 250, 'start_offset': 0, 'end_offset': 60}, {'type': 'thrust', 'duration': 250, 'start_offset': 0, 'end_offset': 60}, {'type': 'slash', 'duration': 500, 'start_angle': 90, 'end_angle': -90}, ] )
 
 bow_weapon = WeaponData(
-    held_image_path="assets/weapons/bow_empty.png",
-    attack_type='RANGED_CHARGE',
+    held_image_path="assets/weapons/bow.png",
+    attack_type='RANGED',
     attack_cooldown=800, combo_reset_time=1000,
     attack_data=[{"image_path": "assets/projectiles/arrow.png", "speed": 25, "lifetime": 10000}],
     attack_sprite_class=Projectile,
-    bow_draw_image="assets/weapons/bow_draw.png"
+    bow_draw_image="assets/weapons/bow_draw.png",
+    bow_empty_image="assets/weapons/bow_empty.png"
 )
 
 wand_weapon = WeaponData( held_image_path="assets/weapons/wand.png", attack_type='RANGED', attack_cooldown=400, combo_reset_time=900, attack_data=[{"image_path": "assets/projectiles/small_orb.png", "speed": 15, "lifetime": 3000}] * 2 + [{"image_path": "assets/projectiles/big_orb.png", "speed": 7, "lifetime": 4000}], attack_sprite_class=Projectile )

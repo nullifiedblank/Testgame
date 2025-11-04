@@ -29,18 +29,19 @@ class GameScreen:
         while running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT: return 'main_menu'
+
+                # --- Simplified Input Handling ---
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1:
                         is_attacking = True
-                        # Only call attack on press for non-continuous weapons
-                        if self.player.weapon and self.player.weapon.attack_type not in ['LASER', 'RANGED_CHARGE']:
+                        # All non-laser weapons now fire on the initial press
+                        if self.player.weapon and self.player.weapon.attack_type != 'LASER':
                             self.player.attack(self.projectile_sprites, True)
+
                 if event.type == pygame.MOUSEBUTTONUP:
                     if event.button == 1:
                         is_attacking = False
-                        # Call attack on release for charge weapons
-                        if self.player.weapon and self.player.weapon.attack_type == 'RANGED_CHARGE':
-                            self.player.attack(self.projectile_sprites, False)
+
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_q: self.player.activate_skill("dash")
                     if event.key == pygame.K_ESCAPE: return 'main_menu'
@@ -49,15 +50,15 @@ class GameScreen:
             self.draw()
 
     def update(self, is_attacking):
-        # ... (update is mostly unchanged) ...
+        # ... (update logic is largely unchanged) ...
         keys = pygame.key.get_pressed()
         mouse_screen_pos = pygame.mouse.get_pos()
         mouse_world_pos = (mouse_screen_pos[0] - self.camera.camera.x, mouse_screen_pos[1] - self.camera.camera.y)
         self.player.handle_input(keys, mouse_world_pos)
         self.player.update()
 
-        # Handle continuous attacks (Laser and Bow charge)
-        if self.player.weapon and self.player.weapon.attack_type in ['LASER', 'RANGED_CHARGE']:
+        # Laser is the only weapon that uses the continuous `is_attacking` state here
+        if self.player.weapon and self.player.weapon.attack_type == 'LASER':
             self.player.attack(self.projectile_sprites, is_attacking)
 
         self.camera.update(self.player.rect)
