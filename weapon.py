@@ -3,27 +3,27 @@ import math
 from settings import *
 from projectile import Projectile
 
-# A helper function to load images
-def load_image(file_path):
+# A helper function to load and scale images
+def load_image(file_path, size=(64, 64)):
     try:
-        return pygame.image.load(file_path).convert_alpha()
+        image = pygame.image.load(file_path).convert_alpha()
+        return pygame.transform.scale(image, size)
     except pygame.error as e:
         print(f"Error loading image: {file_path} - {e}")
-        placeholder = pygame.Surface((30, 30))
+        placeholder = pygame.Surface(size)
         placeholder.fill(RED)
         return placeholder
 
 # --- Weapon Sprite (the one the player holds) ---
 class HeldWeapon(pygame.sprite.Sprite):
+    # ... (code is unchanged)
     def __init__(self, player, image):
         super().__init__()
         self.player = player
         self.image_orig = image
         self.image = self.image_orig
         self.rect = self.image.get_rect(center=player.rect.center)
-
     def update(self):
-        # The weapon's image rotates to follow the player's aiming angle
         self.image = pygame.transform.rotate(self.image_orig, self.player.angle)
         self.rect = self.image.get_rect(center=self.player.rect.center)
 
@@ -78,25 +78,25 @@ class WeaponData:
 
 # --- ======================= WEAPON DEFINITIONS ======================= ---
 sword_weapon = WeaponData(
-    held_image_path="assets/sword.png", attack_type='MELEE', attack_cooldown=300, combo_reset_time=800,
-    attack_prefabs=[{"image_path": "assets/sword_slash.png", "lifetime": 150}] * 2 + [{"image_path": "assets/sword_thrust.png", "lifetime": 250}]
+    held_image_path="assets/weapons/sword.png", attack_type='MELEE', attack_cooldown=300, combo_reset_time=800,
+    attack_prefabs=[{"image_path": "assets/attacks/sword_slash.png", "lifetime": 150}] * 2 + [{"image_path": "assets/attacks/sword_thrust.png", "lifetime": 250}]
 )
 spear_weapon = WeaponData(
-    held_image_path="assets/spear.png", attack_type='MELEE', attack_cooldown=250, combo_reset_time=600,
-    attack_prefabs=[{"image_path": "assets/spear_thrust.png", "lifetime": 200}] * 2 + [{"image_path": "assets/spear_barrage.png", "lifetime": 100}]
+    held_image_path="assets/weapons/spear.png", attack_type='MELEE', attack_cooldown=250, combo_reset_time=600,
+    attack_prefabs=[{"image_path": "assets/attacks/spear_thrust.png", "lifetime": 200}] * 2 + [{"image_path": "assets/attacks/spear_barrage.png", "lifetime": 100}]
 )
 bow_weapon = WeaponData(
-    held_image_path="assets/bow.png", attack_type='RANGED', attack_cooldown=800, combo_reset_time=1000,
-    attack_prefabs=[{"image_path": "assets/arrow.png", "speed": 25, "lifetime": 10000}],
+    held_image_path="assets/weapons/bow.png", attack_type='RANGED', attack_cooldown=800, combo_reset_time=1000,
+    attack_prefabs=[{"image_path": "assets/projectiles/arrow.png", "speed": 25, "lifetime": 10000}],
     attack_sprite_class=Projectile
 )
 wand_weapon = WeaponData(
-    held_image_path="assets/wand.png", attack_type='RANGED', attack_cooldown=400, combo_reset_time=900,
-    attack_prefabs=[{"image_path": "assets/small_orb.png", "speed": 15, "lifetime": 3000}] * 2 + [{"image_path": "assets/big_orb.png", "speed": 7, "lifetime": 4000}],
+    held_image_path="assets/weapons/wand.png", attack_type='RANGED', attack_cooldown=400, combo_reset_time=900,
+    attack_prefabs=[{"image_path": "assets/projectiles/small_orb.png", "speed": 15, "lifetime": 3000}] * 2 + [{"image_path": "assets/projectiles/big_orb.png", "speed": 7, "lifetime": 4000}],
     attack_sprite_class=Projectile
 )
 staff_weapon = WeaponData(
-    held_image_path="assets/staff.png", attack_type='LASER', attack_cooldown=100, combo_reset_time=0,
+    held_image_path="assets/weapons/staff.png", attack_type='LASER', attack_cooldown=100, combo_reset_time=0,
     attack_prefabs=[{"lifetime": 100}], attack_sprite_class=Laser
 )
 

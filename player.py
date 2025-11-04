@@ -1,20 +1,13 @@
 import pygame
 import math
 from settings import *
-from weapon import HeldWeapon
-
-# A helper function to load images
-def load_image(file_path):
-    try:
-        return pygame.image.load(file_path).convert_alpha()
-    except pygame.error as e:
-        print(f"Error loading image: {file_path} - {e}")
-        placeholder = pygame.Surface((40, 60)); placeholder.fill(RED); return placeholder
+from weapon import HeldWeapon, load_image # Import the centralized load_image function
 
 class Player:
     def __init__(self, x, y):
         # --- Visuals ---
-        self.image_right = load_image('assets/player.png')
+        # Use the new load_image function to get a scaled 64x64 image
+        self.image_right = load_image('assets/character/player.png')
         self.image_left = pygame.transform.flip(self.image_right, True, False)
         self.image = self.image_right
         self.pos = pygame.math.Vector2(x, y)
@@ -36,18 +29,14 @@ class Player:
         self.skills = {}; self.is_dashing = False; self.is_invulnerable = False
 
     def set_weapon(self, weapon_data, sprite_group):
-        """Equips a new weapon, creating its visual sprite and adding it to a group."""
         self.weapon = weapon_data
-
-        # If there's already a weapon sprite, remove it
         if self.held_weapon:
             self.held_weapon.kill()
-
         self.held_weapon = HeldWeapon(self, self.weapon.held_image)
         sprite_group.add(self.held_weapon)
 
     def handle_input(self, keys, mouse_pos):
-        # ... (handle_input is unchanged) ...
+        # ... (unchanged) ...
         if self.is_dashing: return
         move_vector = pygame.math.Vector2(0, 0)
         if keys[pygame.K_w]: move_vector.y -= 1
@@ -65,7 +54,7 @@ class Player:
         self.rect.center = self.pos
 
     def attack(self, attack_sprites_group, projectile_group, is_attacking):
-        # ... (attack logic is mostly unchanged, just uses self.weapon now) ...
+        # ... (unchanged) ...
         if not self.weapon or self.is_dashing: return
         current_time = pygame.time.get_ticks()
         if self.weapon.attack_type == 'LASER':
@@ -99,7 +88,6 @@ class Player:
     def update(self):
         self.handle_energy_regen()
         self.update_skills()
-        # The held weapon is now updated via its sprite group, not directly
 
         self.rect.center = self.pos
 
