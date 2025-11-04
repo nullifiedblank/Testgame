@@ -3,102 +3,83 @@ import math
 from settings import *
 from projectile import Projectile
 
-# A helper function to load and scale images
+# ... (Helper and other classes are unchanged) ...
 def load_image(file_path, size=(64, 64)):
     try:
-        image = pygame.image.load(file_path).convert_alpha()
-        return pygame.transform.scale(image, size)
+        image = pygame.image.load(file_path).convert_alpha(); return pygame.transform.scale(image, size)
     except pygame.error as e:
-        print(f"Error loading image: {file_path} - {e}")
-        placeholder = pygame.Surface(size)
-        placeholder.fill(RED)
-        return placeholder
-
-# --- Weapon Sprite (the one the player holds) ---
+        print(f"Error loading image: {file_path} - {e}"); placeholder = pygame.Surface(size); placeholder.fill(RED); return placeholder
+class WeaponAnimation:
+    def __init__(self, weapon_sprite, anim_data):
+        self.weapon_sprite = weapon_sprite; self.anim_data = anim_data; self.start_time = pygame.time.get_ticks()
+        self.duration = anim_data.get('duration', 300); self.is_done = False
+    def update(self):
+        progress = (pygame.time.get_ticks() - self.start_time) / self.duration
+        if progress >= 1: self.is_done = True; progress = 1
+        if self.anim_data.get('type') == 'slash':
+            start_angle = self.anim_data.get('start_angle', 60); end_angle = self.anim_data.get('end_angle', -90)
+            current_angle = start_angle + (end_angle - start_angle) * progress
+            self.weapon_sprite.set_anim_rotation(current_angle)
+        elif self.anim_data.get('type') == 'thrust':
+            start_offset = self.anim_data.get('start_offset', 0); end_offset = self.anim_data.get('end_offset', 40)
+            if progress < 0.5: current_offset = start_offset + (end_offset - start_offset) * (progress * 2)
+            else: current_offset = end_offset - (end_offset - start_offset) * ((progress - 0.5) * 2)
+            self.weapon_sprite.set_anim_offset(current_offset)
 class HeldWeapon(pygame.sprite.Sprite):
-    # ... (code is unchanged)
     def __init__(self, player, image):
-        super().__init__()
-        self.player = player
-        self.image_orig = image
-        self.image = self.image_orig
+        super().__init__(); self.player = player; self.image_orig = image; self.image = self.image_orig
+        self.base_angle = 0; self.anim_angle_offset = 0; self.anim_pos_offset = pygame.math.Vector2(0, 0)
         self.rect = self.image.get_rect(center=player.rect.center)
+    def set_anim_rotation(self, angle_offset): self.anim_angle_offset = angle_offset
+    def set_anim_offset(self, offset_val): self.anim_pos_offset = pygame.math.Vector2(offset_val, 0)
     def update(self):
-        self.image = pygame.transform.rotate(self.image_orig, self.player.angle)
-        self.rect = self.image.get_rect(center=self.player.rect.center)
-
-# --- Attack Visuals ---
-class AttackSprite(pygame.sprite.Sprite):
-    # ... (code is unchanged)
-    def __init__(self, player, image, lifetime):
-        super().__init__()
-        self.player = player
-        self.image_orig = image
-        self.image = pygame.transform.rotate(self.image_orig, player.angle)
-        self.rect = self.image.get_rect()
-        self.offset = pygame.math.Vector2(80, 0)
-        self.spawn_time = pygame.time.get_ticks()
-        self.lifetime = lifetime
-        self.update()
-    def update(self):
-        rotated_offset = self.offset.rotate(-self.player.angle)
-        new_pos = self.player.pos + rotated_offset
-        self.rect.center = new_pos
-        if pygame.time.get_ticks() - self.spawn_time > self.lifetime:
-            self.kill()
-
+        self.base_angle = self.player.angle; final_angle = self.base_angle + self.anim_angle_offset
+        unrotated_rect = self.image_orig.get_rect(bottomleft=self.player.rect.center)
+        self.image = pygame.transform.rotate(self.image_orig, final_angle)
+        self.rect = self.image.get_rect(center=unrotated_rect.center)
+        rotated_pos_offset = self.anim_pos_offset.rotate(-self.base_angle)
+        self.rect.move_ip(rotated_pos_offset)
 class Laser(pygame.sprite.Sprite):
-    # ... (code is unchanged) ...
     def __init__(self, player, lifetime):
-        super().__init__()
-        self.player = player
-        self.lifetime = lifetime
+        super().__init__();self.player = player; self.lifetime = lifetime
         self.spawn_time = pygame.time.get_ticks()
         self.image_orig = pygame.Surface((5, 1000), pygame.SRCALPHA)
         pygame.draw.rect(self.image_orig, RED, (0, 0, 5, 1000))
-        self.image = self.image_orig
-        self.rect = self.image.get_rect(midbottom=player.rect.center)
+        self.image = self.image_orig; self.rect = self.image.get_rect(midbottom=player.rect.center)
     def update(self):
         self.image = pygame.transform.rotate(self.image_orig, self.player.angle)
         angle_rad = math.radians(self.player.angle + 90)
         offset = pygame.math.Vector2(math.cos(angle_rad), -math.sin(angle_rad)) * 500
         self.rect = self.image.get_rect(center=self.player.pos + offset)
-        if pygame.time.get_ticks() - self.spawn_time > self.lifetime:
-            self.kill()
+        if pygame.time.get_ticks() - self.spawn_time > self.lifetime: self.kill()
 
 # --- Weapon Data Structure ---
 class WeaponData:
-    def __init__(self, held_image_path, attack_type, attack_cooldown, combo_reset_time, attack_prefabs, attack_sprite_class=AttackSprite):
+    def __init__(self, held_image_path, attack_type, attack_cooldown, combo_reset_time, attack_data, attack_sprite_class=None, **kwargs):
         self.held_image = load_image(held_image_path)
         self.attack_type = attack_type
         self.attack_cooldown = attack_cooldown
         self.combo_reset_time = combo_reset_time
-        self.attack_prefabs = [{'image': load_image(p['image_path']), **p} if 'image_path' in p else p for p in attack_prefabs]
+        self.attack_data = [{'image': load_image(p['image_path']), **p} if 'image_path' in p else p for p in attack_data]
         self.attack_sprite_class = attack_sprite_class
+        # Store extra data, like images for the bow
+        self.extra_assets = {k: load_image(v) for k, v in kwargs.items()}
 
 # --- ======================= WEAPON DEFINITIONS ======================= ---
-sword_weapon = WeaponData(
-    held_image_path="assets/weapons/sword.png", attack_type='MELEE', attack_cooldown=300, combo_reset_time=800,
-    attack_prefabs=[{"image_path": "assets/attacks/sword_slash.png", "lifetime": 150}] * 2 + [{"image_path": "assets/attacks/sword_thrust.png", "lifetime": 250}]
-)
-spear_weapon = WeaponData(
-    held_image_path="assets/weapons/spear.png", attack_type='MELEE', attack_cooldown=250, combo_reset_time=600,
-    attack_prefabs=[{"image_path": "assets/attacks/spear_thrust.png", "lifetime": 200}] * 2 + [{"image_path": "assets/attacks/spear_barrage.png", "lifetime": 100}]
-)
+sword_weapon = WeaponData( held_image_path="assets/weapons/sword.png", attack_type='MELEE', attack_cooldown=400, combo_reset_time=900, attack_data=[ {'type': 'slash', 'duration': 300, 'start_angle': 60, 'end_angle': -90}, {'type': 'slash', 'duration': 300, 'start_angle': -90, 'end_angle': 60}, {'type': 'thrust', 'duration': 400, 'start_offset': 0, 'end_offset': 50}, ] )
+spear_weapon = WeaponData( held_image_path="assets/weapons/spear.png", attack_type='MELEE', attack_cooldown=300, combo_reset_time=700, attack_data=[ {'type': 'thrust', 'duration': 250, 'start_offset': 0, 'end_offset': 60}, {'type': 'thrust', 'duration': 250, 'start_offset': 0, 'end_offset': 60}, {'type': 'slash', 'duration': 500, 'start_angle': 90, 'end_angle': -90}, ] )
+
 bow_weapon = WeaponData(
-    held_image_path="assets/weapons/bow.png", attack_type='RANGED', attack_cooldown=800, combo_reset_time=1000,
-    attack_prefabs=[{"image_path": "assets/projectiles/arrow.png", "speed": 25, "lifetime": 10000}],
-    attack_sprite_class=Projectile
+    held_image_path="assets/weapons/bow_empty.png",
+    attack_type='RANGED_CHARGE',
+    attack_cooldown=800, combo_reset_time=1000,
+    attack_data=[{"image_path": "assets/projectiles/arrow.png", "speed": 25, "lifetime": 10000}],
+    attack_sprite_class=Projectile,
+    bow_draw_image="assets/weapons/bow_draw.png"
 )
-wand_weapon = WeaponData(
-    held_image_path="assets/weapons/wand.png", attack_type='RANGED', attack_cooldown=400, combo_reset_time=900,
-    attack_prefabs=[{"image_path": "assets/projectiles/small_orb.png", "speed": 15, "lifetime": 3000}] * 2 + [{"image_path": "assets/projectiles/big_orb.png", "speed": 7, "lifetime": 4000}],
-    attack_sprite_class=Projectile
-)
-staff_weapon = WeaponData(
-    held_image_path="assets/weapons/staff.png", attack_type='LASER', attack_cooldown=100, combo_reset_time=0,
-    attack_prefabs=[{"lifetime": 100}], attack_sprite_class=Laser
-)
+
+wand_weapon = WeaponData( held_image_path="assets/weapons/wand.png", attack_type='RANGED', attack_cooldown=400, combo_reset_time=900, attack_data=[{"image_path": "assets/projectiles/small_orb.png", "speed": 15, "lifetime": 3000}] * 2 + [{"image_path": "assets/projectiles/big_orb.png", "speed": 7, "lifetime": 4000}], attack_sprite_class=Projectile )
+staff_weapon = WeaponData( held_image_path="assets/weapons/staff.png", attack_type='LASER', attack_cooldown=100, combo_reset_time=0, attack_data=[{"lifetime": 100}], attack_sprite_class=Laser )
 
 WEAPONS = {
     "sword": sword_weapon, "spear": spear_weapon, "bow": bow_weapon,
