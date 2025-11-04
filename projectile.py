@@ -3,11 +3,10 @@ import math
 from settings import *
 
 class Projectile(pygame.sprite.Sprite):
-    def __init__(self, pos, angle, speed, lifetime, size=(10, 20), color=WHITE):
+    def __init__(self, pos, angle, image, speed, lifetime):
         super().__init__()
 
-        self.image_orig = pygame.Surface(size, pygame.SRCALPHA)
-        pygame.draw.rect(self.image_orig, color, (0, 0, *size))
+        self.image_orig = image
         self.image = pygame.transform.rotate(self.image_orig, angle)
 
         self.rect = self.image.get_rect(center=pos)
