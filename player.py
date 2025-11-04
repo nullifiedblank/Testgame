@@ -47,9 +47,15 @@ class Player:
         if move_vector.length() > 0:
             move_vector.normalize_ip(); self.pos += move_vector * self.speed
         dx, dy = mouse_pos[0] - self.pos.x, mouse_pos[1] - self.pos.y
-        self.angle = math.degrees(math.atan2(-dy, dx))
-        if dx < 0: self.image = self.image_left
-        else: self.image = self.image_right
+        # The angle for rotation needs the offset.
+        self.angle = math.degrees(math.atan2(-dy, dx)) - 90
+
+        # The angle for flipping should be raw, without the offset.
+        raw_angle = math.degrees(math.atan2(-dy, dx))
+        if 90 < abs(raw_angle) < 270:
+             self.image = self.image_left
+        else:
+             self.image = self.image_right
         self.rect.center = self.pos
 
     def attack(self, hittable_sprites, projectile_group, is_attacking):

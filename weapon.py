@@ -3,6 +3,7 @@ import math
 from projectile import Projectile
 from settings import RED
 
+# ... (WeaponAnimation is unchanged) ...
 class WeaponAnimation:
     def __init__(self, weapon_sprite, anim_data, hittable_sprites):
         self.weapon_sprite = weapon_sprite; self.anim_data = anim_data; self.hittable_sprites = hittable_sprites
@@ -28,43 +29,64 @@ class WeaponAnimation:
 
 class HeldWeapon(pygame.sprite.Sprite):
     def __init__(self, player, image):
-        super().__init__(); self.player = player; self.image_orig = image; self.image = self.image_orig
-        self.base_angle = 0; self.anim_angle_offset = 0; self.anim_pos_offset = pygame.math.Vector2(0, 0)
-        self.rect = self.image.get_rect(center=player.rect.center); self.mask = pygame.mask.from_surface(self.image)
-    def set_anim_rotation(self, angle_offset): self.anim_angle_offset = angle_offset
-    def set_anim_offset(self, offset_val): self.anim_pos_offset = pygame.math.Vector2(offset_val, 0)
+        super().__init__()
+        self.player = player
+        self.image_orig = image
+        self.image = self.image_orig
+        self.base_angle = 0
+        self.anim_angle_offset = 0
+        self.anim_pos_offset = pygame.math.Vector2(0, 0)
+        self.rect = self.image.get_rect(center=player.rect.center)
+        self.mask = pygame.mask.from_surface(self.image)
+
+    def set_anim_rotation(self, angle_offset):
+        self.anim_angle_offset = angle_offset
+
+    def set_anim_offset(self, offset_val):
+        self.anim_pos_offset = pygame.math.Vector2(offset_val, 0)
+
     def update(self, *args, **kwargs):
-        self.base_angle = self.player.angle; final_angle = self.base_angle + self.anim_angle_offset
+        self.base_angle = self.player.angle
+        final_angle = self.base_angle + self.anim_angle_offset
+
+        # --- Final, Correct Pivot Logic ---
+        # 1. Rotate the image
         self.image = pygame.transform.rotate(self.image_orig, final_angle)
-        self.rect = self.image.get_rect()
-        self.rect.bottomleft = self.player.rect.center
+
+        # 2. Calculate the vector from the image's center to its bottom-left corner
+        pivot_offset = pygame.math.Vector2(-self.image_orig.get_width() / 2, self.image_orig.get_height() / 2)
+
+        # 3. Rotate that offset vector by the final angle
+        rotated_pivot_offset = pivot_offset.rotate(-final_angle)
+
+        # 4. The new center of the rect is the player's center plus the rotated pivot offset
+        self.rect = self.image.get_rect(center=self.player.rect.center + rotated_pivot_offset)
+
+        # Update mask and apply animation offset as before
         self.mask = pygame.mask.from_surface(self.image)
         rotated_pos_offset = self.anim_pos_offset.rotate(-self.base_angle)
         self.rect.move_ip(rotated_pos_offset)
 
+
+# ... (Laser, WeaponData, and WEAPONS definitions are unchanged) ...
 class Laser(pygame.sprite.Sprite):
     def __init__(self, player, lifetime, damage):
         super().__init__(); self.player = player; self.lifetime = lifetime; self.damage = damage
         self.spawn_time = pygame.time.get_ticks()
     def update(self, hittable_sprites):
-        end_pos = self.player.pos + pygame.math.Vector2(1, 0).rotate(-self.player.angle) * 2000
-        collided_sprites = pygame.sprite.spritecollide(self.player, hittable_sprites, False, pygame.sprite.collide_line((self.player.pos.x, self.player.pos.y), (end_pos.x, end_pos.y)))
-        for sprite in collided_sprites:
-            if hasattr(sprite, 'health'):
+        start_pos = self.player.pos
+        angle_rad = math.radians(self.player.angle + 90)
+        end_pos = start_pos + pygame.math.Vector2(math.cos(angle_rad), -math.sin(angle_rad)) * 2000
+        for sprite in hittable_sprites:
+            if hasattr(sprite, 'health') and sprite.rect.clipline(start_pos, end_pos):
                 sprite.health.take_damage(self.damage * 0.1)
         if pygame.time.get_ticks() - self.spawn_time > self.lifetime: self.kill()
-
 class WeaponData:
     def __init__(self, held_image_path, attack_type, attack_cooldown, combo_reset_time, attack_data, attack_sprite_class=None, **kwargs):
-        self.held_image_path = held_image_path
-        self.attack_type = attack_type
-        self.attack_cooldown = attack_cooldown
-        self.combo_reset_time = combo_reset_time
-        self.attack_data = attack_data
-        self.attack_sprite_class = attack_sprite_class
+        self.held_image_path = held_image_path; self.attack_type = attack_type
+        self.attack_cooldown = attack_cooldown; self.combo_reset_time = combo_reset_time
+        self.attack_data = attack_data; self.attack_sprite_class = attack_sprite_class
         self.extra_assets_paths = kwargs
-
-# --- WEAPON DEFINITIONS ---
 sword_weapon = WeaponData( held_image_path="assets/weapons/sword.png", attack_type='MELEE', attack_cooldown=400, combo_reset_time=900, attack_data=[{'type': 'slash', 'duration': 300, 'damage': 15, 'start_angle': 60, 'end_angle': -90}]*2 + [{'type': 'thrust', 'duration': 400, 'damage': 25, 'start_offset': 0, 'end_offset': 50}] )
 spear_weapon = WeaponData( held_image_path="assets/weapons/spear.png", attack_type='MELEE', attack_cooldown=300, combo_reset_time=700, attack_data=[{'type': 'thrust', 'duration': 250, 'damage': 20, 'start_offset': 0, 'end_offset': 60}]*2 + [{'type': 'slash', 'duration': 500, 'damage': 30, 'start_angle': 90, 'end_angle': -90}] )
 bow_weapon = WeaponData( held_image_path="assets/weapons/bow.png", attack_type='RANGED', attack_cooldown=800, combo_reset_time=1000, attack_data=[{"image_path": "assets/projectiles/arrow.png", "speed": 25, "lifetime": 10000, "damage": 40}], attack_sprite_class=Projectile, bow_draw_image="assets/weapons/bow_draw.png", bow_empty_image="assets/weapons/bow_empty.png")

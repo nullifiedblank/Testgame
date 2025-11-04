@@ -2,6 +2,7 @@ import pygame
 import sys
 from settings import *
 from player import Player
+from background import create_checkerboard
 from weapon import WEAPONS
 from hud import HUD, Camera
 from skills import DashSkill
@@ -91,18 +92,3 @@ class GameScreen:
         self.hud.draw(self.screen)
         pygame.display.flip()
         self.clock.tick(FPS)
-
-# Need to add create_checkerboard here since it's no longer in background.py
-def create_checkerboard(width, height, tile_size):
-    background = pygame.Surface((width, height))
-    dark_grey = (40, 40, 40)
-    light_grey = (50, 50, 50)
-    for y in range(0, height, tile_size):
-        for x in range(0, width, tile_size):
-            rect = pygame.Rect(x, y, tile_size, tile_size)
-            if (x // tile_size) % 2 == (y // tile_size) % 2:
-                color = dark_grey
-            else:
-                color = light_grey
-            pygame.draw.rect(background, color, rect)
-    return background
