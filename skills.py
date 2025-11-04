@@ -43,8 +43,8 @@ class DashSkill(Skill):
         if self.player.is_dashing:
             current_time = pygame.time.get_ticks()
             if current_time - self.dash_start_time <= self.dash_duration:
-                angle_rad = math.radians(self.player.angle + 90)
-                move_vector = pygame.math.Vector2(math.cos(angle_rad), -math.sin(angle_rad))
+                angle_rad = math.radians(self.player.angle)
+                move_vector = pygame.math.Vector2(math.cos(angle_rad), math.sin(angle_rad))
                 self.player.pos += move_vector * self.dash_speed
                 self.player.rect.center = self.player.pos
             else:

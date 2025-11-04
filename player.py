@@ -47,8 +47,8 @@ class Player:
         if move_vector.length() > 0:
             move_vector.normalize_ip(); self.pos += move_vector * self.speed
         dx, dy = mouse_pos[0] - self.pos.x, mouse_pos[1] - self.pos.y
-        # The angle for rotation needs the offset.
-        self.angle = math.degrees(math.atan2(-dy, dx)) - 90
+        # The angle for rotation no longer needs an offset.
+        self.angle = math.degrees(math.atan2(-dy, dx))
 
         # The angle for flipping should be raw, without the offset.
         raw_angle = math.degrees(math.atan2(-dy, dx))
