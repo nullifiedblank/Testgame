@@ -53,7 +53,7 @@ class HeldWeapon(pygame.sprite.Sprite):
         self.mask = pygame.mask.from_surface(self.image) # For pixel-perfect collision
     def set_anim_rotation(self, angle_offset): self.anim_angle_offset = angle_offset
     def set_anim_offset(self, offset_val): self.anim_pos_offset = pygame.math.Vector2(offset_val, 0)
-    def update(self):
+    def update(self, *args, **kwargs): # Accept and ignore extra arguments
         self.base_angle = self.player.angle; final_angle = self.base_angle + self.anim_angle_offset
         unrotated_rect = self.image_orig.get_rect(bottomleft=self.player.rect.center)
         self.image = pygame.transform.rotate(self.image_orig, final_angle)
