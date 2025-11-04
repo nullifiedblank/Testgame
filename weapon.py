@@ -46,26 +46,28 @@ class HeldWeapon(pygame.sprite.Sprite):
         self.anim_pos_offset = pygame.math.Vector2(offset_val, 0)
 
     def update(self, *args, **kwargs):
+        # Apply melee animation angle offset
         self.base_angle = self.player.angle
         final_angle = self.base_angle + self.anim_angle_offset
 
-        # --- Final, Correct Pivot Logic ---
-        # 1. Rotate the image
+        # Perform the rotation and positioning logic as specified
         self.image = pygame.transform.rotate(self.image_orig, final_angle)
 
-        # 2. Calculate the vector from the image's center to the center of the bottom-left quadrant
-        pivot_offset = pygame.math.Vector2(-self.image_orig.get_width() / 4, self.image_orig.get_height() / 4)
+        anchor = pygame.math.Vector2(15, 48)
+        center = pygame.math.Vector2(self.image_orig.get_width() / 2, self.image_orig.get_height() / 2)
+        offset = center - anchor
+        rotated_offset = offset.rotate(-final_angle)
 
-        # 3. Rotate that offset vector by the final angle
-        rotated_pivot_offset = pivot_offset.rotate(-final_angle)
+        # The blit position is the player's center minus the rotated offset
+        # Note: self.rect.center will be used for blitting, so we set that
+        self.rect = self.image.get_rect(center=self.player.rect.center - rotated_offset)
 
-        # 4. The new center of the rect is the player's center minus the rotated pivot offset
-        self.rect = self.image.get_rect(center=self.player.rect.center - rotated_pivot_offset)
+        # This part handles the melee 'thrust' animation, it must be applied last
+        if self.anim_pos_offset.length() > 0:
+            rotated_pos_offset = self.anim_pos_offset.rotate(-self.base_angle)
+            self.rect.move_ip(rotated_pos_offset)
 
-        # Update mask and apply animation offset as before
         self.mask = pygame.mask.from_surface(self.image)
-        rotated_pos_offset = self.anim_pos_offset.rotate(-self.base_angle)
-        self.rect.move_ip(rotated_pos_offset)
 
 
 # ... (Laser, WeaponData, and WEAPONS definitions are unchanged) ...
@@ -81,8 +83,8 @@ class Laser(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(center=player.pos)
     def update(self, hittable_sprites):
         start_pos = self.player.pos
-        angle_rad = math.radians(self.player.angle + 90)
-        end_pos = start_pos + pygame.math.Vector2(math.cos(angle_rad), -math.sin(angle_rad)) * 2000
+        angle_rad = math.radians(self.player.angle)
+        end_pos = start_pos + pygame.math.Vector2(math.cos(angle_rad), math.sin(angle_rad)) * 2000
         for sprite in hittable_sprites:
             if hasattr(sprite, 'health') and sprite.rect.clipline(start_pos, end_pos):
                 sprite.health.take_damage(self.damage * 0.1)
