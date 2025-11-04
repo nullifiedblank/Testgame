@@ -2,7 +2,7 @@ import pygame
 import math
 from settings import *
 from health import Health
-from weapon import load_image
+from assets import ASSETS, load_image # Import from the correct module
 
 class Turret(pygame.sprite.Sprite):
     def __init__(self, x, y, player):
@@ -39,11 +39,12 @@ class Turret(pygame.sprite.Sprite):
             from projectile import Projectile
 
             attack_data = {
-                "image": load_image('assets/projectiles/enemy_bullet.png', size=(20, 20)),
+                "image": ASSETS['assets/projectiles/enemy_bullet.png'],
                 "speed": 10,
-                "lifetime": 5000
+                "lifetime": 5000,
+                "damage": 5 # Give it some damage
             }
 
             projectile = Projectile(pos=self.pos, angle=self.angle, **attack_data)
-            projectile.owner = 'enemy' # Mark it so it doesn't hit other enemies
+            projectile.owner = 'enemy'
             projectile_group.add(projectile)
