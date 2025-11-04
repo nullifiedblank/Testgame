@@ -22,7 +22,6 @@ class GameScreen:
         self.projectile_sprites = pygame.sprite.Group()
 
     def set_weapon(self, weapon_key):
-        """Sets the player's weapon based on a key from the WEAPONS dictionary."""
         self.player.current_weapon = WEAPONS[weapon_key]
 
     def run(self):
@@ -30,9 +29,9 @@ class GameScreen:
         is_attacking = False
 
         while running:
+            # --- Event Loop ---
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    # Instead of quitting, we'll return to the main menu
                     return 'main_menu'
 
                 if event.type == pygame.MOUSEBUTTONDOWN:
@@ -48,22 +47,26 @@ class GameScreen:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_q:
                         self.player.activate_skill("dash")
-                    if event.key == pygame.K_ESCAPE: # Allow Esc to return to menu
+                    if event.key == pygame.K_ESCAPE:
                         return 'main_menu'
 
-            if self.player.current_weapon and self.player.current_weapon.attack_type == 'LASER':
-                self.player.attack(self.attack_sprites, self.projectile_sprites, is_attacking)
+            # --- Input Polling (for continuous movement) ---
+            keys = pygame.key.get_pressed()
 
-            self.update()
+            # --- Updates ---
+            self.update(keys, is_attacking)
             self.draw()
 
-    def update(self):
-        keys = pygame.key.get_pressed()
+    def update(self, keys, is_attacking):
         mouse_screen_pos = pygame.mouse.get_pos()
         mouse_world_pos = (mouse_screen_pos[0] - self.camera.camera.x, mouse_screen_pos[1] - self.camera.camera.y)
 
         self.player.handle_input(keys, mouse_world_pos)
         self.player.update()
+
+        # Continuous attack logic (for laser)
+        if self.player.current_weapon and self.player.current_weapon.attack_type == 'LASER':
+            self.player.attack(self.attack_sprites, self.projectile_sprites, is_attacking)
 
         self.camera.update(self.player.rect)
         self.attack_sprites.update()
