@@ -80,13 +80,21 @@ class Laser(pygame.sprite.Sprite):
         self.damage = damage
         self.spawn_time = pygame.time.get_ticks()
         self.is_laser = True
+        self.current_angle = self.player.angle
         self.start_pos = self.player.pos
-        angle_rad = math.radians(self.player.angle + 90)
+        angle_rad = math.radians(self.current_angle + 90)
         self.end_pos = self.start_pos + pygame.math.Vector2(math.cos(angle_rad), -math.sin(angle_rad)) * 2000
         # Add a dummy image and rect to prevent rendering crashes
         self.image = pygame.Surface((1, 1), pygame.SRCALPHA)
         self.rect = self.image.get_rect(center=player.pos)
     def update(self, hittable_sprites):
+        target_angle = self.player.angle
+        self.current_angle += (target_angle - self.current_angle) * 0.1 # Interpolate angle
+
+        self.start_pos = self.player.pos
+        angle_rad = math.radians(self.current_angle + 90)
+        self.end_pos = self.start_pos + pygame.math.Vector2(math.cos(angle_rad), -math.sin(angle_rad)) * 2000
+
         for sprite in hittable_sprites:
             if hasattr(sprite, 'health') and sprite.rect.clipline(self.start_pos, self.end_pos):
                 sprite.health.take_damage(self.damage * 0.1)
@@ -98,7 +106,7 @@ class WeaponData:
         self.attack_data = attack_data; self.attack_sprite_class = attack_sprite_class
         self.extra_assets_paths = kwargs
 sword_weapon = WeaponData( held_image_path="assets/weapons/sword.png", attack_type='MELEE', attack_cooldown=400, combo_reset_time=900, attack_data=[{'type': 'slash', 'duration': 150, 'damage': 15, 'start_angle': 60, 'end_angle': -90}]*2 + [{'type': 'thrust', 'duration': 150, 'damage': 25, 'start_offset': 0, 'end_offset': 50}] )
-spear_weapon = WeaponData( held_image_path="assets/weapons/spear.png", attack_type='MELEE', attack_cooldown=600, combo_reset_time=700, attack_data=[
+spear_weapon = WeaponData( held_image_path="assets/weapons/spear.png", attack_type='MELEE', attack_cooldown=600, combo_reset_time=1500, attack_data=[
     {'type': 'thrust', 'duration': 250, 'damage': 20, 'start_offset': 0, 'end_offset': 60},
     {'type': 'thrust', 'duration': 250, 'damage': 20, 'start_offset': 0, 'end_offset': 60},
     {'multi_hit': [

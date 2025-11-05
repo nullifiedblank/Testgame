@@ -23,6 +23,7 @@ class GameScreen:
         self.player = Player(self.world_width // 2, self.world_height // 2, self.asset_manager)
         self.player.skills["dash"] = DashSkill(self.player)
         self.hud = HUD(self.player)
+        self.font = pygame.font.Font(None, 22)
 
         self.all_sprites = pygame.sprite.Group()
         self.projectile_sprites = pygame.sprite.Group()
@@ -95,6 +96,11 @@ class GameScreen:
             self.screen.blit(sprite.image, self.camera.apply(sprite.rect))
         for sprite in self.enemy_sprites:
             self.screen.blit(sprite.image, self.camera.apply(sprite.rect))
+            # Draw HP text
+            hp_text = f"{int(sprite.health.current_hp)} / {sprite.health.max_hp}"
+            text_surf = self.font.render(hp_text, True, settings.WHITE)
+            text_rect = text_surf.get_rect(center=self.camera.apply(sprite.rect).center - pygame.math.Vector2(0, sprite.rect.height / 2 + 10))
+            self.screen.blit(text_surf, text_rect)
 
         if settings.DEBUG_HITBOXES:
             # Draw player mask outline

@@ -27,7 +27,7 @@ class Turret(pygame.sprite.Sprite):
 
     def aim_at_player(self):
         dx, dy = self.player.pos.x - self.pos.x, self.player.pos.y - self.pos.y
-        self.angle = math.degrees(math.atan2(-dy, dx))
+        self.angle = math.degrees(math.atan2(-dy, dx)) - 90
         self.image = pygame.transform.rotate(self.image_orig, self.angle)
         self.rect = self.image.get_rect(center=self.pos)
 

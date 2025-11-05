@@ -33,6 +33,7 @@ class Player(pygame.sprite.Sprite):
         self.weapon = None; self.combo_counter = 0; self.last_attack_time = 0
         self.active_animation = None; self.bow_anim_timer = 0; self.bow_anim_stage = 0
         self.multi_hit_combo = None; self.multi_hit_counter = 0
+        self.laser_windup_time = 0
 
         # --- Skills ---
         self.skills = {}
@@ -86,11 +87,17 @@ class Player(pygame.sprite.Sprite):
         # Laser
         if self.weapon.attack_type == 'LASER':
             if is_attacking and self.energy > 0:
-                if current_time - self.last_attack_time > self.weapon.attack_cooldown:
-                    self.energy -= 2
-                    laser_sprite = self.weapon.attack_sprite_class(player=self, **self.weapon.attack_data[0])
-                    all_sprites.add(laser_sprite)
-                    self.last_attack_time = current_time
+                if self.laser_windup_time == 0:
+                    self.laser_windup_time = current_time
+
+                if current_time - self.laser_windup_time > 500: # 0.5 second windup
+                    if current_time - self.last_attack_time > self.weapon.attack_cooldown:
+                        self.energy -= 2
+                        laser_sprite = self.weapon.attack_sprite_class(player=self, **self.weapon.attack_data[0])
+                        all_sprites.add(laser_sprite)
+                        self.last_attack_time = current_time
+            else:
+                self.laser_windup_time = 0
             return
 
         if not is_attacking: return
