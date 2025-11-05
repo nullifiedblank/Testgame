@@ -1,6 +1,6 @@
 import pygame
 import sys
-from settings import *
+import settings
 from player import Player
 from background import create_checkerboard
 from weapon import WEAPONS
@@ -57,6 +57,8 @@ class GameScreen:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_q: self.player.activate_skill("dash")
                     if event.key == pygame.K_ESCAPE: return 'main_menu'
+                    if event.key == pygame.K_h:
+                        settings.DEBUG_HITBOXES = not settings.DEBUG_HITBOXES
             self.update(is_attacking)
             self.draw()
 
@@ -89,6 +91,20 @@ class GameScreen:
             self.screen.blit(sprite.image, self.camera.apply(sprite.rect))
         for sprite in self.enemy_sprites:
             self.screen.blit(sprite.image, self.camera.apply(sprite.rect))
+
+        if settings.DEBUG_HITBOXES:
+            # Draw player hitbox
+            pygame.draw.rect(self.screen, (255, 0, 0), self.camera.apply(self.player.rect), 2)
+            # Draw held weapon hitbox
+            if self.player.held_weapon:
+                pygame.draw.rect(self.screen, (255, 165, 0), self.camera.apply(self.player.held_weapon.rect), 2)
+            # Draw enemy hitboxes
+            for sprite in self.enemy_sprites:
+                pygame.draw.rect(self.screen, (0, 255, 0), self.camera.apply(sprite.rect), 2)
+            # Draw projectile hitboxes
+            for sprite in self.projectile_sprites:
+                pygame.draw.rect(self.screen, (0, 0, 255), self.camera.apply(sprite.rect), 2)
+
         self.hud.draw(self.screen)
         pygame.display.flip()
-        self.clock.tick(FPS)
+        self.clock.tick(settings.FPS)
