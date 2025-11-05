@@ -15,8 +15,8 @@ class Projectile(pygame.sprite.Sprite):
         self.owner = 'player' # Default owner
 
         self.pos = pygame.math.Vector2(pos)
-        angle_rad = math.radians(angle)
-        self.velocity = pygame.math.Vector2(math.cos(angle_rad), math.sin(angle_rad)) * speed
+        angle_rad = math.radians(angle + 90)
+        self.velocity = pygame.math.Vector2(math.cos(angle_rad), -math.sin(angle_rad)) * speed
 
     def update(self, hittable_sprites):
         self.pos += self.velocity
