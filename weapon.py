@@ -55,7 +55,7 @@ class HeldWeapon(pygame.sprite.Sprite):
 
         anchor = pygame.math.Vector2(15, 48)
         center = pygame.math.Vector2(self.image_orig.get_width() / 2, self.image_orig.get_height() / 2)
-        offset = center - anchor
+        offset = anchor - center
         rotated_offset = offset.rotate(-final_angle)
 
         # The blit position is the player's center minus the rotated offset
