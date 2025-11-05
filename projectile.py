@@ -35,6 +35,10 @@ class Projectile(pygame.sprite.Sprite):
                 if hasattr(sprite, 'owner') and sprite.owner == self.owner:
                     continue
 
+                # Check for invulnerability
+                if hasattr(sprite, 'is_invulnerable') and sprite.is_invulnerable:
+                    continue
+
                 if hasattr(sprite, 'health'):
                     sprite.health.take_damage(self.damage)
                     self.kill() # Destroy projectile on hit
