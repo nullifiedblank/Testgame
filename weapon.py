@@ -78,15 +78,16 @@ class Laser(pygame.sprite.Sprite):
         self.lifetime = lifetime
         self.damage = damage
         self.spawn_time = pygame.time.get_ticks()
+        self.is_laser = True
+        self.start_pos = self.player.pos
+        angle_rad = math.radians(self.player.angle + 90)
+        self.end_pos = self.start_pos + pygame.math.Vector2(math.cos(angle_rad), -math.sin(angle_rad)) * 2000
         # Add a dummy image and rect to prevent rendering crashes
         self.image = pygame.Surface((1, 1), pygame.SRCALPHA)
         self.rect = self.image.get_rect(center=player.pos)
     def update(self, hittable_sprites):
-        start_pos = self.player.pos
-        angle_rad = math.radians(self.player.angle + 90)
-        end_pos = start_pos + pygame.math.Vector2(math.cos(angle_rad), -math.sin(angle_rad)) * 2000
         for sprite in hittable_sprites:
-            if hasattr(sprite, 'health') and sprite.rect.clipline(start_pos, end_pos):
+            if hasattr(sprite, 'health') and sprite.rect.clipline(self.start_pos, self.end_pos):
                 sprite.health.take_damage(self.damage * 0.1)
         if pygame.time.get_ticks() - self.spawn_time > self.lifetime: self.kill()
 class WeaponData:

@@ -12,6 +12,7 @@ class Turret(pygame.sprite.Sprite):
         self.image = self.image_orig
         self.pos = pygame.math.Vector2(x, y)
         self.rect = self.image.get_rect(center=self.pos)
+        self.mask = pygame.mask.from_surface(self.image)
         self.angle = 0
 
         self.health = Health(self, 50)

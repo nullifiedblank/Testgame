@@ -93,17 +93,29 @@ class GameScreen:
             self.screen.blit(sprite.image, self.camera.apply(sprite.rect))
 
         if settings.DEBUG_HITBOXES:
-            # Draw player hitbox
-            pygame.draw.rect(self.screen, (255, 0, 0), self.camera.apply(self.player.rect), 2)
-            # Draw held weapon hitbox
+            # Draw player mask outline
+            player_mask_surf = self.player.mask.to_surface(setcolor=(255, 0, 0, 200), unsetcolor=(0,0,0,0))
+            self.screen.blit(player_mask_surf, self.camera.apply(self.player.rect))
+
+            # Draw held weapon mask outline
             if self.player.held_weapon:
-                pygame.draw.rect(self.screen, (255, 165, 0), self.camera.apply(self.player.held_weapon.rect), 2)
-            # Draw enemy hitboxes
+                weapon_mask_surf = self.player.held_weapon.mask.to_surface(setcolor=(255, 165, 0, 200), unsetcolor=(0,0,0,0))
+                self.screen.blit(weapon_mask_surf, self.camera.apply(self.player.held_weapon.rect))
+
+            # Draw enemy rects (since they use rect-based collision)
             for sprite in self.enemy_sprites:
                 pygame.draw.rect(self.screen, (0, 255, 0), self.camera.apply(sprite.rect), 2)
-            # Draw projectile hitboxes
+
+            # Draw projectile rects
             for sprite in self.projectile_sprites:
                 pygame.draw.rect(self.screen, (0, 0, 255), self.camera.apply(sprite.rect), 2)
+
+            # Draw laser line
+            for sprite in self.all_sprites:
+                if hasattr(sprite, 'is_laser') and sprite.is_laser:
+                    start_pos_cam = self.camera.apply_point(sprite.start_pos)
+                    end_pos_cam = self.camera.apply_point(sprite.end_pos)
+                    pygame.draw.line(self.screen, (255, 0, 255), start_pos_cam, end_pos_cam, 3)
 
         self.hud.draw(self.screen)
         pygame.display.flip()

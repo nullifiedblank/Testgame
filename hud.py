@@ -6,6 +6,8 @@ class Camera:
         self.camera = pygame.Rect(0, 0, width, height)
     def apply(self, entity_rect):
         return entity_rect.move(self.camera.topleft)
+    def apply_point(self, point):
+        return point + self.camera.topleft
     def update(self, target_rect):
         x = -target_rect.centerx + int(SCREEN_WIDTH / 2)
         y = -target_rect.centery + int(SCREEN_HEIGHT / 2)
