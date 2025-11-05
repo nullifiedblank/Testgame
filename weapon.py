@@ -48,7 +48,7 @@ class HeldWeapon(pygame.sprite.Sprite):
     def update(self, *args, **kwargs):
         # Apply melee animation angle offset
         self.base_angle = self.player.angle
-        final_angle = self.base_angle + self.anim_angle_offset
+        final_angle = self.base_angle + self.anim_angle_offset + 45
 
         # Perform the rotation and positioning logic as specified
         self.image = pygame.transform.rotate(self.image_orig, final_angle)
