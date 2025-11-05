@@ -3,8 +3,9 @@ import math
 from settings import *
 from weapon import HeldWeapon, WeaponAnimation
 
-class Player:
+class Player(pygame.sprite.Sprite):
     def __init__(self, x, y, asset_manager):
+        super().__init__()
         self.asset_manager = asset_manager
 
         # --- Visuals ---
