@@ -14,15 +14,16 @@ class Turret(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(center=self.pos)
         self.mask = pygame.mask.from_surface(self.image)
         self.angle = 0
+        self.owner = 'enemy'
 
         self.health = Health(self, 50)
 
         self.fire_rate = 2000
         self.last_shot_time = 0
 
-    def update(self, projectile_group):
+    def update(self, all_sprites, projectile_group):
         self.aim_at_player()
-        self.shoot(projectile_group)
+        self.shoot(all_sprites, projectile_group)
 
     def aim_at_player(self):
         dx, dy = self.player.pos.x - self.pos.x, self.player.pos.y - self.pos.y
@@ -30,7 +31,7 @@ class Turret(pygame.sprite.Sprite):
         self.image = pygame.transform.rotate(self.image_orig, self.angle)
         self.rect = self.image.get_rect(center=self.pos)
 
-    def shoot(self, projectile_group):
+    def shoot(self, all_sprites, projectile_group):
         current_time = pygame.time.get_ticks()
         if current_time - self.last_shot_time > self.fire_rate:
             self.last_shot_time = current_time
@@ -46,4 +47,5 @@ class Turret(pygame.sprite.Sprite):
 
             projectile = Projectile(pos=self.pos, angle=self.angle, **attack_data)
             projectile.owner = 'enemy'
+            all_sprites.add(projectile)
             projectile_group.add(projectile)

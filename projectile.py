@@ -7,8 +7,9 @@ class Projectile(pygame.sprite.Sprite):
         super().__init__()
 
         self.image_orig = image
-        self.image = pygame.transform.rotate(self.image_orig, angle)
+        self.image = pygame.transform.rotate(self.image_orig, angle + 45)
         self.rect = self.image.get_rect(center=pos)
+        self.mask = pygame.mask.from_surface(self.image)
         self.spawn_time = pygame.time.get_ticks()
         self.lifetime = lifetime
         self.damage = damage
@@ -18,21 +19,26 @@ class Projectile(pygame.sprite.Sprite):
         angle_rad = math.radians(angle + 90)
         self.velocity = pygame.math.Vector2(math.cos(angle_rad), -math.sin(angle_rad)) * speed
 
-    def update(self, hittable_sprites):
+    def update(self, hittable_sprites, hittable_sprites_2=None):
         self.pos += self.velocity
         self.rect.center = self.pos
 
         # --- Collision Detection ---
-        collided_sprites = pygame.sprite.spritecollide(self, hittable_sprites, False)
-        for sprite in collided_sprites:
-            # Prevent projectiles from hitting their owner
-            if hasattr(sprite, 'owner') and sprite.owner == self.owner:
-                continue
+        groups_to_check = [hittable_sprites]
+        if hittable_sprites_2:
+            groups_to_check.append(hittable_sprites_2)
 
-            if hasattr(sprite, 'health'):
-                sprite.health.take_damage(self.damage)
-                self.kill() # Destroy projectile on hit
-                return # Stop checking after the first hit
+        for group in groups_to_check:
+            collided_sprites = pygame.sprite.spritecollide(self, group, False, pygame.sprite.collide_mask)
+            for sprite in collided_sprites:
+                # Prevent projectiles from hitting their owner
+                if hasattr(sprite, 'owner') and sprite.owner == self.owner:
+                    continue
+
+                if hasattr(sprite, 'health'):
+                    sprite.health.take_damage(self.damage)
+                    self.kill() # Destroy projectile on hit
+                    return # Stop checking after the first hit
 
         if pygame.time.get_ticks() - self.spawn_time > self.lifetime:
             self.kill()

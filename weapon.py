@@ -64,7 +64,8 @@ class HeldWeapon(pygame.sprite.Sprite):
 
         # This part handles the melee 'thrust' animation, it must be applied last
         if self.anim_pos_offset.length() > 0:
-            rotated_pos_offset = self.anim_pos_offset.rotate(-self.base_angle)
+            # We need to rotate the offset by the final angle, not the base angle
+            rotated_pos_offset = self.anim_pos_offset.rotate(-final_angle)
             self.rect.move_ip(rotated_pos_offset)
 
         self.mask = pygame.mask.from_surface(self.image)
@@ -96,8 +97,8 @@ class WeaponData:
         self.attack_cooldown = attack_cooldown; self.combo_reset_time = combo_reset_time
         self.attack_data = attack_data; self.attack_sprite_class = attack_sprite_class
         self.extra_assets_paths = kwargs
-sword_weapon = WeaponData( held_image_path="assets/weapons/sword.png", attack_type='MELEE', attack_cooldown=400, combo_reset_time=900, attack_data=[{'type': 'slash', 'duration': 150, 'damage': 15, 'start_angle': 60, 'end_angle': -90}]*2 + [{'type': 'thrust', 'duration': 200, 'damage': 25, 'start_offset': 0, 'end_offset': 50}] )
-spear_weapon = WeaponData( held_image_path="assets/weapons/spear.png", attack_type='MELEE', attack_cooldown=300, combo_reset_time=700, attack_data=[{'type': 'thrust', 'duration': 250, 'damage': 20, 'start_offset': 0, 'end_offset': 60}]*2 + [{'type': 'slash', 'duration': 500, 'damage': 30, 'start_angle': 90, 'end_angle': -90}] )
+sword_weapon = WeaponData( held_image_path="assets/weapons/sword.png", attack_type='MELEE', attack_cooldown=400, combo_reset_time=900, attack_data=[{'type': 'slash', 'duration': 150, 'damage': 15, 'start_angle': 60, 'end_angle': -90}]*2 + [{'type': 'thrust', 'duration': 150, 'damage': 25, 'start_offset': 0, 'end_offset': 50}] )
+spear_weapon = WeaponData( held_image_path="assets/weapons/spear.png", attack_type='MELEE', attack_cooldown=600, combo_reset_time=700, attack_data=[{'type': 'thrust', 'duration': 250, 'damage': 20, 'start_offset': 0, 'end_offset': 60}]*2 + [{'type': 'thrust', 'duration': 100, 'damage': 10}]*3 )
 bow_weapon = WeaponData( held_image_path="assets/weapons/bow.png", attack_type='RANGED', attack_cooldown=800, combo_reset_time=1000, attack_data=[{"image_path": "assets/projectiles/arrow.png", "speed": 25, "lifetime": 10000, "damage": 40}], attack_sprite_class=Projectile, bow_draw_image="assets/weapons/bow_draw.png", bow_empty_image="assets/weapons/bow_empty.png")
 wand_weapon = WeaponData( held_image_path="assets/weapons/wand.png", attack_type='RANGED', attack_cooldown=400, combo_reset_time=900, attack_data=[{"image_path": "assets/projectiles/small_orb.png", "speed": 15, "lifetime": 3000, "damage": 10}] * 2 + [{"image_path": "assets/projectiles/big_orb.png", "speed": 7, "lifetime": 4000, "damage": 25}], attack_sprite_class=Projectile )
 staff_weapon = WeaponData( held_image_path="assets/weapons/staff.png", attack_type='LASER', attack_cooldown=100, combo_reset_time=0, attack_data=[{"lifetime": 100, "damage": 5}], attack_sprite_class=Laser )

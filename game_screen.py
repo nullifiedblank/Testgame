@@ -27,6 +27,7 @@ class GameScreen:
         self.all_sprites = pygame.sprite.Group()
         self.projectile_sprites = pygame.sprite.Group()
         self.enemy_sprites = pygame.sprite.Group()
+        self.player_group = pygame.sprite.GroupSingle(self.player)
 
         self.turret_spawn_pos = (self.world_width // 2 + 300, self.world_height // 2)
         self.turret_death_time = 0
@@ -72,9 +73,12 @@ class GameScreen:
         if self.player.weapon and self.player.weapon.attack_type in ['LASER', 'RANGED_CHARGE']:
             self.player.attack(self.all_sprites, self.enemy_sprites, self.projectile_sprites, is_attacking)
         self.camera.update(self.player.rect)
-        self.all_sprites.update(self.enemy_sprites)
-        self.projectile_sprites.update(self.enemy_sprites)
-        self.enemy_sprites.update(self.projectile_sprites)
+
+        # Update sprites
+        self.all_sprites.update(self.enemy_sprites) # General updates
+        self.projectile_sprites.update(self.enemy_sprites, self.player_group) # Check projectile collisions
+        self.enemy_sprites.update(self.all_sprites, self.projectile_sprites) # Update enemies
+
         if not self.turret_instance.alive() and self.turret_death_time == 0:
             self.turret_death_time = pygame.time.get_ticks()
         if self.turret_death_time != 0 and pygame.time.get_ticks() - self.turret_death_time > self.turret_respawn_delay:
