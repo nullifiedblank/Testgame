@@ -2,6 +2,7 @@ import pygame
 import math
 from settings import *
 from weapon import HeldWeapon, WeaponAnimation
+from health import Health
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, x, y, asset_manager):
@@ -19,19 +20,25 @@ class Player(pygame.sprite.Sprite):
         self.held_weapon = None
 
         # --- Stats ---
-        self.speed = 5; self.max_health = 200; self.health = self.max_health
-        self.max_energy = 200; self.energy = self.max_energy
-        self.energy_regen_rate = 5; self.energy_regen_interval = 2000
+        self.speed = 5
+        self.max_health = 200
+        self.health = Health(self, self.max_health)
+        self.max_energy = 200
+        self.energy = self.max_energy
+        self.energy_regen_rate = 5
+        self.energy_regen_interval = 2000
         self.last_regen_time = 0
 
         # --- Weapon & Attack ---
         self.weapon = None; self.combo_counter = 0; self.last_attack_time = 0
         self.active_animation = None; self.bow_anim_timer = 0; self.bow_anim_stage = 0
+        self.multi_hit_combo = None; self.multi_hit_counter = 0
 
         # --- Skills ---
         self.skills = {}
         self.is_dashing = False
         self.is_invulnerable = False
+        self.owner = 'player'
 
     def set_weapon(self, weapon_data, sprite_group):
         self.weapon = weapon_data
@@ -94,7 +101,11 @@ class Player(pygame.sprite.Sprite):
         attack_data = self.weapon.attack_data[self.combo_counter].copy()
 
         if self.weapon.attack_type == 'MELEE':
-            self.active_animation = WeaponAnimation(self.held_weapon, attack_data, hittable_sprites)
+            if 'multi_hit' in attack_data:
+                self.multi_hit_combo = attack_data
+                self.multi_hit_counter = 0
+            else:
+                self.active_animation = WeaponAnimation(self.held_weapon, attack_data, hittable_sprites)
 
         elif self.weapon.attack_type == 'RANGED':
             attack_data['image'] = self.asset_manager.get(attack_data.pop('image_path'))
@@ -111,6 +122,15 @@ class Player(pygame.sprite.Sprite):
         self.handle_energy_regen()
         self.update_skills()
         self.handle_bow_animation()
+
+        if self.multi_hit_combo and (not self.active_animation or self.active_animation.is_done):
+            if self.multi_hit_counter < len(self.multi_hit_combo['multi_hit']):
+                attack_data = self.multi_hit_combo['multi_hit'][self.multi_hit_counter]
+                self.active_animation = WeaponAnimation(self.held_weapon, attack_data, pygame.sprite.Group()) # Pass empty group for now
+                self.multi_hit_counter += 1
+            else:
+                self.multi_hit_combo = None
+
         if self.active_animation:
             self.active_animation.update()
             if self.active_animation.is_done:
