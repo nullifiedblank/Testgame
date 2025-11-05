@@ -25,7 +25,7 @@ class HUD:
         health_bar_x = self.bar_margin
         health_bar_y = self.bar_margin
 
-        health_ratio = self.player.health / self.player.max_health
+        health_ratio = self.player.health.current_hp / self.player.health.max_hp
         health_fill_width = int(self.bar_length * health_ratio)
 
         health_bar_rect = pygame.Rect(health_bar_x, health_bar_y, self.bar_length, self.bar_height)
@@ -49,7 +49,7 @@ class HUD:
         pygame.draw.rect(surface, WHITE, energy_bar_rect, 2)
 
         # --- Text Display ---
-        health_text = f"{int(self.player.health)} / {self.player.max_health}"
+        health_text = f"{int(self.player.health.current_hp)} / {self.player.health.max_hp}"
         energy_text = f"{int(self.player.energy)} / {self.player.max_energy}"
 
         health_text_surf = self.font.render(health_text, True, WHITE)
