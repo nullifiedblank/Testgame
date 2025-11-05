@@ -64,9 +64,9 @@ class HeldWeapon(pygame.sprite.Sprite):
 
         # This part handles the melee 'thrust' animation, it must be applied last
         if self.anim_pos_offset.length() > 0:
-            # We need to rotate the offset by the base angle to aim correctly
-            rotated_pos_offset = self.anim_pos_offset.rotate(-self.base_angle)
-            self.rect.move_ip(rotated_pos_offset)
+            angle_rad = math.radians(self.base_angle + 90)
+            move_vector = pygame.math.Vector2(math.cos(angle_rad), -math.sin(angle_rad)) * self.anim_pos_offset.x
+            self.rect.move_ip(move_vector)
 
         self.mask = pygame.mask.from_surface(self.image)
 
