@@ -34,6 +34,7 @@ class Player(pygame.sprite.Sprite):
         self.active_animation = None; self.bow_anim_timer = 0; self.bow_anim_stage = 0
         self.multi_hit_combo = None; self.multi_hit_counter = 0
         self.laser_windup_time = 0
+        self.enemy_sprites = None
 
         # --- Skills ---
         self.skills = {}
@@ -68,6 +69,7 @@ class Player(pygame.sprite.Sprite):
         self.rect.center = self.pos
 
     def attack(self, all_sprites, hittable_sprites, projectile_group, is_attacking):
+        self.enemy_sprites = hittable_sprites # Store the enemy sprites group
         if not self.weapon or self.is_dashing or (self.active_animation and not self.active_animation.is_done): return
         current_time = pygame.time.get_ticks()
 
@@ -133,7 +135,7 @@ class Player(pygame.sprite.Sprite):
         if self.multi_hit_combo and (not self.active_animation or self.active_animation.is_done):
             if self.multi_hit_counter < len(self.multi_hit_combo['multi_hit']):
                 attack_data = self.multi_hit_combo['multi_hit'][self.multi_hit_counter]
-                self.active_animation = WeaponAnimation(self.held_weapon, attack_data, pygame.sprite.Group()) # Pass empty group for now
+                self.active_animation = WeaponAnimation(self.held_weapon, attack_data, self.enemy_sprites)
                 self.multi_hit_counter += 1
             else:
                 self.multi_hit_combo = None
