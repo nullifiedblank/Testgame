@@ -90,20 +90,35 @@ class StepSkill(Skill):
                 self.player.is_invulnerable = False
 
 class OrogenySkill(Skill):
-    def __init__(self, player, wall_sprites, all_sprites):
+    def __init__(self, player, wall_sprites, all_sprites, asset_manager):
         super().__init__(player, cooldown=12000, energy_cost=40)
         self.wall_sprites = wall_sprites
         self.all_sprites = all_sprites
+        self.asset_manager = asset_manager
 
     def activate(self):
         if super().activate():
+            wall_image = self.asset_manager.get('orogeny')
             angle_rad = math.radians(self.player.angle + 90)
             direction = pygame.math.Vector2(math.cos(angle_rad), -math.sin(angle_rad))
-            wall_pos = self.player.pos + direction * 64
 
-            new_wall = EarthWall(wall_pos)
-            self.wall_sprites.add(new_wall)
-            self.all_sprites.add(new_wall)
+            # Perpendicular vector for placing walls side-by-side
+            perp_direction = direction.rotate(90)
+
+            # Center position of the middle wall segment
+            center_pos = self.player.pos + direction * 64
+
+            # Calculate positions for the three segments
+            positions = [
+                center_pos - perp_direction * 32,
+                center_pos,
+                center_pos + perp_direction * 32
+            ]
+
+            for pos in positions:
+                new_wall = EarthWall(pos, wall_image)
+                self.wall_sprites.add(new_wall)
+                self.all_sprites.add(new_wall)
             return True
         return False
 

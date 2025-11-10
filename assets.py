@@ -43,6 +43,9 @@ class AssetManager:
         # Enemies
         self.assets['assets/enemies/turret.png'] = self.load_image('assets/enemies/turret.png')
 
+        # Obstacles
+        self.assets['orogeny'] = self.load_image('assets/obstacles/orogeny.png', size=(32, 64))
+
         print("...assets loaded.")
 
     def get(self, key):

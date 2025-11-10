@@ -31,7 +31,7 @@ class GameScreen:
         self.player = Player(self.world_width // 2, self.world_height // 2, self.asset_manager)
         self.player_group = pygame.sprite.GroupSingle(self.player)
         self.player.skills["step"] = StepSkill(self.player, self.all_sprites, self.wall_sprites)
-        self.player.skills["orogeny"] = OrogenySkill(self.player, self.wall_sprites, self.all_sprites)
+        self.player.skills["orogeny"] = OrogenySkill(self.player, self.wall_sprites, self.all_sprites, self.asset_manager)
         self.player.skills["rebound_ball"] = ReboundBallSkill(self.player, self.projectile_sprites, self.asset_manager)
         self.hud = HUD(self.player)
         self.font = pygame.font.Font(None, 22)
