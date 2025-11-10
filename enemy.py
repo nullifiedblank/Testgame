@@ -17,13 +17,25 @@ class Turret(pygame.sprite.Sprite):
         self.owner = 'enemy'
 
         self.health = Health(self, 50)
+        self.speed = 3 # Example speed for future mobile enemies
+        self.speed_multiplier = 1.0
+        self.slow_end_time = 0
 
         self.fire_rate = 2000
         self.last_shot_time = 0
 
     def update(self, all_sprites, projectile_group):
+        self.update_slow()
         self.aim_at_player()
         self.shoot(all_sprites, projectile_group)
+
+    def apply_slow(self, strength, duration):
+        self.speed_multiplier = strength
+        self.slow_end_time = pygame.time.get_ticks() + duration
+
+    def update_slow(self):
+        if pygame.time.get_ticks() > self.slow_end_time:
+            self.speed_multiplier = 1.0
 
     def aim_at_player(self):
         dx, dy = self.player.pos.x - self.pos.x, self.player.pos.y - self.pos.y

@@ -3,7 +3,7 @@ import math
 from settings import *
 
 class Projectile(pygame.sprite.Sprite):
-    def __init__(self, pos, angle, image, speed, lifetime, damage=10):
+    def __init__(self, pos, angle, image, speed, lifetime, damage=10, has_slow=False):
         super().__init__()
 
         self.image_orig = image
@@ -14,6 +14,7 @@ class Projectile(pygame.sprite.Sprite):
         self.lifetime = lifetime
         self.damage = damage
         self.owner = 'player' # Default owner
+        self.has_slow = has_slow
 
         self.pos = pygame.math.Vector2(pos)
         angle_rad = math.radians(angle + 90)
@@ -46,6 +47,11 @@ class Projectile(pygame.sprite.Sprite):
 
                 if hasattr(sprite, 'health'):
                     sprite.health.take_damage(self.damage)
+
+                    # --- Talisman Integration ---
+                    if self.owner and hasattr(self.owner, 'talisman') and self.owner.talisman:
+                        self.owner.talisman.on_deal_damage(self.owner, sprite, self.has_slow)
+
                     self.kill() # Destroy projectile on hit
                     return # Stop checking after the first hit
 

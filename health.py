@@ -10,6 +10,13 @@ class Health:
         if amount < 0: return
 
         self.current_hp -= amount
+
+        # --- Talisman Integration ---
+        if hasattr(self.owner, 'talisman') and self.owner.talisman:
+            self.owner.last_damage_time = pygame.time.get_ticks()
+            self.owner.last_damage_value = amount
+            self.owner.talisman.on_take_damage(self.owner, amount)
+
         if self.current_hp <= 0:
             self.current_hp = 0
             self.die()

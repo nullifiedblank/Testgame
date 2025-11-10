@@ -80,3 +80,10 @@ class HUD:
                 cooldown_surf = self.font.render(cooldown_text, True, WHITE)
                 cooldown_rect = cooldown_surf.get_rect(topleft=(self.bar_margin, energy_bar_y + self.bar_height + self.bar_margin + 30))
                 surface.blit(cooldown_surf, cooldown_rect)
+
+        # --- Talisman Display ---
+        if self.player.talisman:
+            talisman_text = f"Talisman: {self.player.talisman.name}"
+            talisman_surf = self.font.render(talisman_text, True, YELLOW)
+            talisman_rect = talisman_surf.get_rect(topleft=(self.bar_margin, energy_bar_y + self.bar_height + self.bar_margin + 60))
+            surface.blit(talisman_surf, talisman_rect)

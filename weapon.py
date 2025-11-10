@@ -25,6 +25,12 @@ class WeaponAnimation:
         for sprite in collided_sprites:
             if hasattr(sprite, 'health') and sprite not in self.hit_targets:
                 sprite.health.take_damage(self.anim_data.get('damage', 0))
+
+                # --- Talisman Integration ---
+                if self.weapon_sprite.player.talisman:
+                    has_slow = self.anim_data.get('has_slow', False)
+                    self.weapon_sprite.player.talisman.on_deal_damage(self.weapon_sprite.player, sprite, has_slow)
+
                 self.hit_targets.append(sprite)
 
 class HeldWeapon(pygame.sprite.Sprite):
@@ -98,6 +104,11 @@ class Laser(pygame.sprite.Sprite):
         for sprite in hittable_sprites:
             if hasattr(sprite, 'health') and sprite.rect.clipline(self.start_pos, self.end_pos):
                 sprite.health.take_damage(self.damage * 0.1)
+
+                # --- Talisman Integration ---
+                if self.player.talisman:
+                    self.player.talisman.on_deal_damage(self.player, sprite, False)
+
         if pygame.time.get_ticks() - self.spawn_time > self.lifetime: self.kill()
 class WeaponData:
     def __init__(self, held_image_path, attack_type, attack_cooldown, combo_reset_time, attack_data, attack_sprite_class=None, **kwargs):
@@ -116,6 +127,10 @@ spear_weapon = WeaponData( held_image_path="assets/weapons/spear.png", attack_ty
     ]}
 ])
 bow_weapon = WeaponData( held_image_path="assets/weapons/bow.png", attack_type='RANGED', attack_cooldown=800, combo_reset_time=1000, attack_data=[{"image_path": "assets/projectiles/arrow.png", "speed": 25, "lifetime": 10000, "damage": 40}], attack_sprite_class=Projectile, bow_draw_image="assets/weapons/bow_draw.png", bow_empty_image="assets/weapons/bow_empty.png")
-wand_weapon = WeaponData( held_image_path="assets/weapons/wand.png", attack_type='RANGED', attack_cooldown=400, combo_reset_time=900, attack_data=[{"image_path": "assets/projectiles/small_orb.png", "speed": 15, "lifetime": 3000, "damage": 10}] * 2 + [{"image_path": "assets/projectiles/big_orb.png", "speed": 7, "lifetime": 4000, "damage": 25}], attack_sprite_class=Projectile )
+wand_weapon = WeaponData( held_image_path="assets/weapons/wand.png", attack_type='RANGED', attack_cooldown=400, combo_reset_time=900, attack_data=[
+    {"image_path": "assets/projectiles/small_orb.png", "speed": 15, "lifetime": 3000, "damage": 10},
+    {"image_path": "assets/projectiles/small_orb.png", "speed": 15, "lifetime": 3000, "damage": 10},
+    {"image_path": "assets/projectiles/big_orb.png", "speed": 7, "lifetime": 4000, "damage": 25, "has_slow": True}
+], attack_sprite_class=Projectile )
 staff_weapon = WeaponData( held_image_path="assets/weapons/staff.png", attack_type='LASER', attack_cooldown=100, combo_reset_time=0, attack_data=[{"lifetime": 100, "damage": 5}], attack_sprite_class=Laser )
 WEAPONS = { "sword": sword_weapon, "spear": spear_weapon, "bow": bow_weapon, "wand": wand_weapon, "staff": staff_weapon }

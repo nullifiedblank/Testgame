@@ -8,6 +8,7 @@ from hud import HUD, Camera
 from skills import StepSkill, OrogenySkill
 from enemy import Turret
 from obstacles import Wall
+from talismans import TALISMANS
 
 class GameScreen:
     def __init__(self, screen, clock, asset_manager):
@@ -75,6 +76,11 @@ class GameScreen:
                     if event.key == pygame.K_ESCAPE: return 'main_menu'
                     if event.key == pygame.K_h:
                         settings.DEBUG_HITBOXES = not settings.DEBUG_HITBOXES
+                    # --- Talisman Equipping ---
+                    if event.key == pygame.K_F1:
+                        self.player.equip_talisman(TALISMANS["frost_amulet"])
+                    if event.key == pygame.K_F2:
+                        self.player.equip_talisman(TALISMANS["talisman_of_rejuvenation"])
             self.update(is_attacking)
             self.draw()
 

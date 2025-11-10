@@ -43,11 +43,19 @@ class Player(pygame.sprite.Sprite):
         self.owner = 'player'
         self.movement_speed_multiplier = 1.0
 
+        # --- Talismans ---
+        self.talisman = None
+        self.last_damage_time = 0
+        self.last_damage_value = 0
+
     def set_weapon(self, weapon_data, sprite_group):
         self.weapon = weapon_data
         if self.held_weapon: self.held_weapon.kill()
         self.held_weapon = HeldWeapon(self, self.asset_manager.get(self.weapon.held_image_path))
         sprite_group.add(self.held_weapon)
+
+    def equip_talisman(self, talisman):
+        self.talisman = talisman
 
     def handle_input(self, keys, mouse_pos, wall_sprites):
         if self.is_dashing: return
@@ -99,6 +107,7 @@ class Player(pygame.sprite.Sprite):
                 attack_data = self.weapon.attack_data[0].copy()
                 attack_data['image'] = self.asset_manager.get(attack_data.pop('image_path'))
                 projectile = self.weapon.attack_sprite_class(pos=self.pos, angle=self.angle, **attack_data)
+                projectile.owner = self
                 projectile_group.add(projectile)
                 self.last_attack_time = current_time
             return
@@ -138,6 +147,7 @@ class Player(pygame.sprite.Sprite):
         elif self.weapon.attack_type == 'RANGED':
             attack_data['image'] = self.asset_manager.get(attack_data.pop('image_path'))
             projectile = self.weapon.attack_sprite_class(pos=self.pos, angle=self.angle, **attack_data)
+            projectile.owner = self
             projectile_group.add(projectile)
 
         self.last_attack_time = current_time
@@ -150,6 +160,9 @@ class Player(pygame.sprite.Sprite):
         self.handle_energy_regen()
         self.update_skills()
         self.handle_bow_animation()
+
+        if self.talisman:
+            self.talisman.update(self)
 
         if self.multi_hit_combo and (not self.active_animation or self.active_animation.is_done):
             if self.multi_hit_counter < len(self.multi_hit_combo['multi_hit']):
