@@ -93,7 +93,7 @@ class Player(pygame.sprite.Sprite):
             if velocity.y < 0: self.rect.top = wall.rect.bottom
             self.pos.y = self.rect.centery
 
-    def attack(self, all_sprites, hittable_sprites, projectile_group, is_attacking):
+    def attack(self, hittable_sprites, projectile_group, is_attacking, all_sprites=None):
         self.enemy_sprites = hittable_sprites # Store the enemy sprites group
         if not self.weapon or self.is_dashing or (self.active_animation and not self.active_animation.is_done): return
         current_time = pygame.time.get_ticks()

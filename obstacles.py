@@ -16,6 +16,6 @@ class EarthWall(pygame.sprite.Sprite):
         self.spawn_time = pygame.time.get_ticks()
         self.lifetime = 2500 # 2.5 seconds
 
-    def update(self):
+    def update(self, *args, **kwargs):
         if pygame.time.get_ticks() - self.spawn_time > self.lifetime:
             self.kill()
