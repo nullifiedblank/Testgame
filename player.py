@@ -41,6 +41,7 @@ class Player(pygame.sprite.Sprite):
         self.is_dashing = False
         self.is_invulnerable = False
         self.owner = 'player'
+        self.movement_speed_multiplier = 1.0
 
     def set_weapon(self, weapon_data, sprite_group):
         self.weapon = weapon_data
@@ -56,7 +57,7 @@ class Player(pygame.sprite.Sprite):
         if keys[pygame.K_a]: move_vector.x -= 1
         if keys[pygame.K_d]: move_vector.x += 1
         if move_vector.length() > 0:
-            move_vector.normalize_ip(); self.pos += move_vector * self.speed
+            move_vector.normalize_ip(); self.pos += move_vector * self.speed * self.movement_speed_multiplier
         dx, dy = mouse_pos[0] - self.pos.x, mouse_pos[1] - self.pos.y
         self.angle = math.degrees(math.atan2(-dy, dx)) - 90
 
@@ -89,6 +90,7 @@ class Player(pygame.sprite.Sprite):
         # Laser
         if self.weapon.attack_type == 'LASER':
             if is_attacking and self.energy > 0:
+                self.movement_speed_multiplier = 0.5 # Slow down the player
                 if self.laser_windup_time == 0:
                     self.laser_windup_time = current_time
 
@@ -100,6 +102,7 @@ class Player(pygame.sprite.Sprite):
                         self.last_attack_time = current_time
             else:
                 self.laser_windup_time = 0
+                self.movement_speed_multiplier = 1.0 # Reset speed
             return
 
         if not is_attacking: return

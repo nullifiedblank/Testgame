@@ -19,16 +19,17 @@ class GameScreen:
         self.background = create_checkerboard(self.world_width, self.world_height, 100)
         self.camera = Camera(self.world_width, self.world_height)
 
-        # Pass the asset manager to the player
-        self.player = Player(self.world_width // 2, self.world_height // 2, self.asset_manager)
-        self.player.skills["dash"] = DashSkill(self.player)
-        self.hud = HUD(self.player)
-        self.font = pygame.font.Font(None, 22)
-
+        # --- Sprite Groups ---
         self.all_sprites = pygame.sprite.Group()
         self.projectile_sprites = pygame.sprite.Group()
         self.enemy_sprites = pygame.sprite.Group()
+
+        # --- Game Objects ---
+        self.player = Player(self.world_width // 2, self.world_height // 2, self.asset_manager)
         self.player_group = pygame.sprite.GroupSingle(self.player)
+        self.player.skills["dash"] = DashSkill(self.player, self.all_sprites)
+        self.hud = HUD(self.player)
+        self.font = pygame.font.Font(None, 22)
 
         self.turret_spawn_pos = (self.world_width // 2 + 300, self.world_height // 2)
         self.turret_death_time = 0

@@ -89,7 +89,7 @@ class Laser(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(center=player.pos)
     def update(self, hittable_sprites):
         target_angle = self.player.angle
-        self.current_angle += (target_angle - self.current_angle) * 0.02 # Interpolate angle
+        self.current_angle += (target_angle - self.current_angle) * 0.01 # Interpolate angle
 
         self.start_pos = self.player.pos
         angle_rad = math.radians(self.current_angle + 90)
