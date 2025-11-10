@@ -98,21 +98,26 @@ class OrogenySkill(Skill):
 
     def activate(self):
         if super().activate():
-            wall_image = self.asset_manager.get('orogeny')
-            angle_rad = math.radians(self.player.angle + 90)
+            wall_image_orig = self.asset_manager.get('orogeny')
+            angle = self.player.angle
+
+            # Rotate the wall image to align with the player's aim
+            wall_image = pygame.transform.rotate(wall_image_orig, angle + 90)
+
+            angle_rad = math.radians(angle + 90)
             direction = pygame.math.Vector2(math.cos(angle_rad), -math.sin(angle_rad))
 
             # Perpendicular vector for placing walls side-by-side
             perp_direction = direction.rotate(90)
 
-            # Center position of the middle wall segment
-            center_pos = self.player.pos + direction * 64
+            # Center position of the wall formation
+            wall_center = self.player.pos + direction * 64
 
-            # Calculate positions for the three segments
+            # Calculate center positions for the three segments
             positions = [
-                center_pos - perp_direction * 32,
-                center_pos,
-                center_pos + perp_direction * 32
+                wall_center - perp_direction * 32,
+                wall_center,
+                wall_center + perp_direction * 32
             ]
 
             for pos in positions:

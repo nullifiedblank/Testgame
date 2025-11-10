@@ -59,5 +59,4 @@ class Turret(pygame.sprite.Sprite):
 
             projectile = Projectile(pos=self.pos, angle=self.angle, **attack_data)
             projectile.owner = 'enemy'
-            all_sprites.add(projectile)
             projectile_group.add(projectile)

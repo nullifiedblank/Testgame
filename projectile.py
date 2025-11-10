@@ -71,7 +71,7 @@ class ReboundBall(pygame.sprite.Sprite):
         self.bounce_count = 0
         self.friction = 0.995 # Slight velocity decay
 
-    def update(self, hittable_sprites, wall_sprites):
+    def update(self, hittable_sprites, player_group, wall_sprites):
         self.velocity *= self.friction
         self.pos += self.velocity
         self.rect.center = self.pos
@@ -90,17 +90,17 @@ class ReboundBall(pygame.sprite.Sprite):
                 return
 
             # --- Better Reflection Logic ---
-            # Move the ball back to its position before the collision
-            self.pos -= self.velocity
-            self.rect.center = self.pos
+            # --- Better Reflection Logic ---
+            self.pos -= self.velocity # Move back to pre-collision position
 
-            # Check for horizontal or vertical collision
-            # This is a simplified approach, a more robust solution would use vector projection
-            # But for simple horizontal/vertical walls, this works.
-            if self.rect.left < collided_walls[0].rect.right and self.rect.right > collided_walls[0].rect.left:
-                self.velocity.y *= -1 # Vertical collision
-            else:
-                self.velocity.x *= -1 # Horizontal collision
+            # Check for collision on each axis separately
+            self.rect.centerx = self.pos.x + self.velocity.x
+            if pygame.sprite.spritecollide(self, wall_sprites, False):
+                self.velocity.x *= -1
+
+            self.rect.centery = self.pos.y + self.velocity.y
+            if pygame.sprite.spritecollide(self, wall_sprites, False):
+                self.velocity.y *= -1
 
             self.damage *= 0.75
 

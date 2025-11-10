@@ -93,7 +93,7 @@ class Laser(pygame.sprite.Sprite):
         # Add a dummy image and rect to prevent rendering crashes
         self.image = pygame.Surface((1, 1), pygame.SRCALPHA)
         self.rect = self.image.get_rect(center=player.pos)
-    def update(self, hittable_sprites):
+    def update(self, hittable_sprites, *args, **kwargs):
         target_angle = self.player.angle
         self.current_angle += (target_angle - self.current_angle) * 0.01 # Interpolate angle
 
