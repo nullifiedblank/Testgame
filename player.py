@@ -49,7 +49,7 @@ class Player(pygame.sprite.Sprite):
         self.held_weapon = HeldWeapon(self, self.asset_manager.get(self.weapon.held_image_path))
         sprite_group.add(self.held_weapon)
 
-    def handle_input(self, keys, mouse_pos):
+    def handle_input(self, keys, mouse_pos, wall_sprites):
         if self.is_dashing: return
         move_vector = pygame.math.Vector2(0, 0)
         if keys[pygame.K_w]: move_vector.y -= 1
@@ -57,17 +57,33 @@ class Player(pygame.sprite.Sprite):
         if keys[pygame.K_a]: move_vector.x -= 1
         if keys[pygame.K_d]: move_vector.x += 1
         if move_vector.length() > 0:
-            move_vector.normalize_ip(); self.pos += move_vector * self.speed * self.movement_speed_multiplier
+            move_vector.normalize_ip()
+            self.move_and_collide(move_vector * self.speed * self.movement_speed_multiplier, wall_sprites)
+
         dx, dy = mouse_pos[0] - self.pos.x, mouse_pos[1] - self.pos.y
         self.angle = math.degrees(math.atan2(-dy, dx)) - 90
 
-        # The angle for flipping should be raw, without the offset.
         raw_angle = math.degrees(math.atan2(-dy, dx))
         if 90 < abs(raw_angle) < 270:
              self.image = self.image_left
         else:
              self.image = self.image_right
         self.rect.center = self.pos
+
+    def move_and_collide(self, velocity, wall_sprites):
+        self.pos.x += velocity.x
+        self.rect.centerx = self.pos.x
+        for wall in pygame.sprite.spritecollide(self, wall_sprites, False):
+            if velocity.x > 0: self.rect.right = wall.rect.left
+            if velocity.x < 0: self.rect.left = wall.rect.right
+            self.pos.x = self.rect.centerx
+
+        self.pos.y += velocity.y
+        self.rect.centery = self.pos.y
+        for wall in pygame.sprite.spritecollide(self, wall_sprites, False):
+            if velocity.y > 0: self.rect.bottom = wall.rect.top
+            if velocity.y < 0: self.rect.top = wall.rect.bottom
+            self.pos.y = self.rect.centery
 
     def attack(self, all_sprites, hittable_sprites, projectile_group, is_attacking):
         self.enemy_sprites = hittable_sprites # Store the enemy sprites group

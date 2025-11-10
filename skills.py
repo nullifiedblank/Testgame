@@ -1,5 +1,6 @@
 import pygame
 import math
+from obstacles import EarthWall
 
 class AfterImage(pygame.sprite.Sprite):
     def __init__(self, x, y, image, lifetime=200):
@@ -43,13 +44,14 @@ class Skill:
     def update(self):
         pass
 
-class DashSkill(Skill):
-    def __init__(self, player, all_sprites_group):
+class StepSkill(Skill):
+    def __init__(self, player, all_sprites_group, wall_sprites):
         super().__init__(player, cooldown=4000, energy_cost=15)
         self.dash_speed = 30
         self.dash_duration = 100 # ms
         self.dash_start_time = 0
         self.after_image_group = all_sprites_group
+        self.wall_sprites = wall_sprites
         self.after_image_timer = 0
         self.after_image_interval = 30 # ms
 
@@ -70,6 +72,14 @@ class DashSkill(Skill):
                 self.player.pos += move_vector * self.dash_speed
                 self.player.rect.center = self.player.pos
 
+                # --- Wall Collision ---
+                if pygame.sprite.spritecollide(self.player, self.wall_sprites, False):
+                    self.player.pos -= move_vector * self.dash_speed # Move back
+                    self.player.rect.center = self.player.pos
+                    self.player.is_dashing = False # Stop the dash
+                    self.player.is_invulnerable = False
+                    return
+
                 if current_time - self.after_image_timer > self.after_image_interval:
                     self.after_image_timer = current_time
                     after_image = AfterImage(self.player.pos.x, self.player.pos.y, self.player.image)
@@ -77,3 +87,21 @@ class DashSkill(Skill):
             else:
                 self.player.is_dashing = False
                 self.player.is_invulnerable = False
+
+class OrogenySkill(Skill):
+    def __init__(self, player, wall_sprites, all_sprites):
+        super().__init__(player, cooldown=12000, energy_cost=40)
+        self.wall_sprites = wall_sprites
+        self.all_sprites = all_sprites
+
+    def activate(self):
+        if super().activate():
+            angle_rad = math.radians(self.player.angle + 90)
+            direction = pygame.math.Vector2(math.cos(angle_rad), -math.sin(angle_rad))
+            wall_pos = self.player.pos + direction * 64
+
+            new_wall = EarthWall(wall_pos)
+            self.wall_sprites.add(new_wall)
+            self.all_sprites.add(new_wall)
+            return True
+        return False

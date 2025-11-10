@@ -5,8 +5,9 @@ from player import Player
 from background import create_checkerboard
 from weapon import WEAPONS
 from hud import HUD, Camera
-from skills import DashSkill
+from skills import StepSkill, OrogenySkill
 from enemy import Turret
+from obstacles import Wall
 
 class GameScreen:
     def __init__(self, screen, clock, asset_manager):
@@ -23,13 +24,24 @@ class GameScreen:
         self.all_sprites = pygame.sprite.Group()
         self.projectile_sprites = pygame.sprite.Group()
         self.enemy_sprites = pygame.sprite.Group()
+        self.wall_sprites = pygame.sprite.Group()
 
         # --- Game Objects ---
         self.player = Player(self.world_width // 2, self.world_height // 2, self.asset_manager)
         self.player_group = pygame.sprite.GroupSingle(self.player)
-        self.player.skills["dash"] = DashSkill(self.player, self.all_sprites)
+        self.player.skills["step"] = StepSkill(self.player, self.all_sprites, self.wall_sprites)
+        self.player.skills["orogeny"] = OrogenySkill(self.player, self.wall_sprites, self.all_sprites)
         self.hud = HUD(self.player)
         self.font = pygame.font.Font(None, 22)
+
+        # --- Walls ---
+        # Add some boundary walls for testing
+        wall_thickness = 20
+        self.wall_sprites.add(Wall(0, 0, self.world_width, wall_thickness)) # Top
+        self.wall_sprites.add(Wall(0, self.world_height - wall_thickness, self.world_width, wall_thickness)) # Bottom
+        self.wall_sprites.add(Wall(0, 0, wall_thickness, self.world_height)) # Left
+        self.wall_sprites.add(Wall(self.world_width - wall_thickness, 0, wall_thickness, self.world_height)) # Right
+
 
         self.turret_spawn_pos = (self.world_width // 2 + 300, self.world_height // 2)
         self.turret_death_time = 0
@@ -58,7 +70,8 @@ class GameScreen:
                 if event.type == pygame.MOUSEBUTTONUP:
                     if event.button == 1: is_attacking = False
                 if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_q: self.player.activate_skill("dash")
+                    if event.key == pygame.K_q: self.player.activate_skill("step")
+                    if event.key == pygame.K_e: self.player.activate_skill("orogeny")
                     if event.key == pygame.K_ESCAPE: return 'main_menu'
                     if event.key == pygame.K_h:
                         settings.DEBUG_HITBOXES = not settings.DEBUG_HITBOXES
@@ -70,15 +83,15 @@ class GameScreen:
         keys = pygame.key.get_pressed()
         mouse_screen_pos = pygame.mouse.get_pos()
         mouse_world_pos = (mouse_screen_pos[0] - self.camera.camera.x, mouse_screen_pos[1] - self.camera.camera.y)
-        self.player.handle_input(keys, mouse_world_pos)
+        self.player.handle_input(keys, mouse_world_pos, self.wall_sprites)
         self.player.update()
         if self.player.weapon and self.player.weapon.attack_type in ['LASER', 'RANGED_CHARGE']:
             self.player.attack(self.all_sprites, self.enemy_sprites, self.projectile_sprites, is_attacking)
         self.camera.update(self.player.rect)
 
         # Update sprites
-        self.all_sprites.update(self.enemy_sprites) # General updates
-        self.projectile_sprites.update(self.enemy_sprites, self.player_group) # Check projectile collisions
+        self.all_sprites.update() # General updates for things like walls
+        self.projectile_sprites.update(self.enemy_sprites, self.player_group, self.wall_sprites) # Check projectile collisions
         self.enemy_sprites.update(self.all_sprites, self.projectile_sprites) # Update enemies
 
         if not self.turret_instance.alive() and self.turret_death_time == 0:
@@ -95,6 +108,8 @@ class GameScreen:
             self.screen.blit(sprite.image, self.camera.apply(sprite.rect))
         for sprite in self.projectile_sprites:
             self.screen.blit(sprite.image, self.camera.apply(sprite.rect))
+        for wall in self.wall_sprites:
+            self.screen.blit(wall.image, self.camera.apply(wall.rect))
         for sprite in self.enemy_sprites:
             self.screen.blit(sprite.image, self.camera.apply(sprite.rect))
             # Draw HP text

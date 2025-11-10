@@ -19,9 +19,14 @@ class Projectile(pygame.sprite.Sprite):
         angle_rad = math.radians(angle + 90)
         self.velocity = pygame.math.Vector2(math.cos(angle_rad), -math.sin(angle_rad)) * speed
 
-    def update(self, hittable_sprites, hittable_sprites_2=None):
+    def update(self, hittable_sprites, hittable_sprites_2=None, wall_sprites=None):
         self.pos += self.velocity
         self.rect.center = self.pos
+
+        # --- Wall Collision ---
+        if wall_sprites and pygame.sprite.spritecollide(self, wall_sprites, False):
+            self.kill()
+            return
 
         # --- Collision Detection ---
         groups_to_check = [hittable_sprites]
