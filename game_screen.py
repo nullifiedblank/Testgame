@@ -5,7 +5,7 @@ from player import Player
 from background import create_checkerboard
 from weapon import WEAPONS
 from hud import HUD, Camera
-from skills import StepSkill, OrogenySkill
+from skills import StepSkill, OrogenySkill, ReboundBallSkill
 from enemy import Turret
 from obstacles import Wall
 from talismans import TALISMANS
@@ -32,6 +32,7 @@ class GameScreen:
         self.player_group = pygame.sprite.GroupSingle(self.player)
         self.player.skills["step"] = StepSkill(self.player, self.all_sprites, self.wall_sprites)
         self.player.skills["orogeny"] = OrogenySkill(self.player, self.wall_sprites, self.all_sprites)
+        self.player.skills["rebound_ball"] = ReboundBallSkill(self.player, self.projectile_sprites, self.asset_manager)
         self.hud = HUD(self.player)
         self.font = pygame.font.Font(None, 22)
 
@@ -73,6 +74,7 @@ class GameScreen:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_q: self.player.activate_skill("step")
                     if event.key == pygame.K_e: self.player.activate_skill("orogeny")
+                    if event.key == pygame.K_r: self.player.activate_skill("rebound_ball")
                     if event.key == pygame.K_ESCAPE: return 'main_menu'
                     if event.key == pygame.K_h:
                         settings.DEBUG_HITBOXES = not settings.DEBUG_HITBOXES

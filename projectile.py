@@ -57,3 +57,57 @@ class Projectile(pygame.sprite.Sprite):
 
         if pygame.time.get_ticks() - self.spawn_time > self.lifetime:
             self.kill()
+
+class ReboundBall(pygame.sprite.Sprite):
+    def __init__(self, pos, angle, image, speed, damage, owner):
+        super().__init__()
+        self.image = image
+        self.rect = self.image.get_rect(center=pos)
+        self.pos = pygame.math.Vector2(pos)
+        angle_rad = math.radians(angle + 90)
+        self.velocity = pygame.math.Vector2(math.cos(angle_rad), -math.sin(angle_rad)) * speed
+        self.damage = damage
+        self.owner = owner
+        self.bounce_count = 0
+        self.friction = 0.995 # Slight velocity decay
+
+    def update(self, hittable_sprites, wall_sprites):
+        self.velocity *= self.friction
+        self.pos += self.velocity
+        self.rect.center = self.pos
+
+        # --- End Conditions ---
+        if self.velocity.magnitude() < 60:
+            self.kill()
+            return
+
+        # --- Wall Collision ---
+        collided_walls = pygame.sprite.spritecollide(self, wall_sprites, False)
+        if collided_walls:
+            self.bounce_count += 1
+            if self.bounce_count >= 4:
+                self.kill()
+                return
+
+            # --- Better Reflection Logic ---
+            # Move the ball back to its position before the collision
+            self.pos -= self.velocity
+            self.rect.center = self.pos
+
+            # Check for horizontal or vertical collision
+            # This is a simplified approach, a more robust solution would use vector projection
+            # But for simple horizontal/vertical walls, this works.
+            if self.rect.left < collided_walls[0].rect.right and self.rect.right > collided_walls[0].rect.left:
+                self.velocity.y *= -1 # Vertical collision
+            else:
+                self.velocity.x *= -1 # Horizontal collision
+
+            self.damage *= 0.75
+
+        # --- Enemy Collision ---
+        collided_enemies = pygame.sprite.spritecollide(self, hittable_sprites, False)
+        for enemy in collided_enemies:
+            if hasattr(enemy, 'health'):
+                enemy.health.take_damage(self.damage)
+                if self.owner and hasattr(self.owner, 'talisman') and self.owner.talisman:
+                    self.owner.talisman.on_deal_damage(self.owner, enemy)

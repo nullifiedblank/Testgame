@@ -87,3 +87,13 @@ class HUD:
             talisman_surf = self.font.render(talisman_text, True, YELLOW)
             talisman_rect = talisman_surf.get_rect(topleft=(self.bar_margin, energy_bar_y + self.bar_height + self.bar_margin + 60))
             surface.blit(talisman_surf, talisman_rect)
+
+        # --- Rebound Ball Cooldown ---
+        rebound_ball_skill = self.player.skills.get("rebound_ball")
+        if rebound_ball_skill:
+            cooldown_remaining = (rebound_ball_skill.cooldown - (pygame.time.get_ticks() - rebound_ball_skill.last_used_time)) / 1000
+            if cooldown_remaining > 0:
+                cooldown_text = f"Rebound Ball CD: {cooldown_remaining:.1f}s"
+                cooldown_surf = self.font.render(cooldown_text, True, WHITE)
+                cooldown_rect = cooldown_surf.get_rect(topleft=(self.bar_margin, energy_bar_y + self.bar_height + self.bar_margin + 90))
+                surface.blit(cooldown_surf, cooldown_rect)

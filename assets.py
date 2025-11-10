@@ -38,6 +38,7 @@ class AssetManager:
         self.assets['assets/projectiles/small_orb.png'] = self.load_image('assets/projectiles/small_orb.png')
         self.assets['assets/projectiles/big_orb.png'] = self.load_image('assets/projectiles/big_orb.png')
         self.assets['assets/projectiles/enemy_bullet.png'] = self.load_image('assets/projectiles/enemy_bullet.png', size=(20, 20))
+        self.assets['assets/projectiles/soccer_ball.png'] = self.load_image('assets/projectiles/soccer_ball.png', size=(32, 32))
 
         # Enemies
         self.assets['assets/enemies/turret.png'] = self.load_image('assets/enemies/turret.png')

@@ -1,6 +1,7 @@
 import pygame
 import math
 from obstacles import EarthWall
+from projectile import ReboundBall
 
 class AfterImage(pygame.sprite.Sprite):
     def __init__(self, x, y, image, lifetime=200):
@@ -105,3 +106,37 @@ class OrogenySkill(Skill):
             self.all_sprites.add(new_wall)
             return True
         return False
+
+class ReboundBallSkill(Skill):
+    def __init__(self, player, projectile_group, asset_manager):
+        super().__init__(player, cooldown=8000, energy_cost=35)
+        self.projectile_group = projectile_group
+        self.asset_manager = asset_manager
+        self.active_ball = None
+
+    def activate(self):
+        if super().activate() and not self.active_ball:
+            ball_image = self.asset_manager.get('assets/projectiles/soccer_ball.png')
+            self.active_ball = ReboundBall(
+                pos=self.player.pos,
+                angle=self.player.angle,
+                image=ball_image,
+                speed=500,
+                damage=30,
+                owner=self.player
+            )
+            self.projectile_group.add(self.active_ball)
+            return True
+        return False
+
+    def update(self):
+        if self.active_ball and not self.active_ball.alive():
+            self.active_ball = None
+            return
+
+        if self.active_ball:
+            if pygame.sprite.collide_rect(self.player, self.active_ball):
+                if self.active_ball.bounce_count >= 2 and self.active_ball.velocity.magnitude() >= 60:
+                    self.active_ball.kill()
+                    self.active_ball = None
+                    self.last_used_time = pygame.time.get_ticks() - (self.cooldown - 2000) # 2 second cooldown
