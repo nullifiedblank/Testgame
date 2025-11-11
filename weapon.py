@@ -7,6 +7,7 @@ from settings import RED
 class WeaponAnimation:
     def __init__(self, weapon_sprite, anim_data, hittable_sprites):
         self.weapon_sprite = weapon_sprite; self.anim_data = anim_data; self.hittable_sprites = hittable_sprites
+        self.team_id = weapon_sprite.player.team_id
         self.start_time = pygame.time.get_ticks(); self.duration = anim_data.get('duration', 300); self.is_done = False
         self.hit_targets = []
     def update(self):
@@ -23,6 +24,7 @@ class WeaponAnimation:
             self.weapon_sprite.set_anim_offset(current_offset)
         collided_sprites = pygame.sprite.spritecollide(self.weapon_sprite, self.hittable_sprites, False, pygame.sprite.collide_mask)
         for sprite in collided_sprites:
+            if hasattr(sprite, 'team_id') and sprite.team_id == self.team_id: continue
             if hasattr(sprite, 'health') and sprite not in self.hit_targets:
                 sprite.health.take_damage(self.anim_data.get('damage', 0))
 
@@ -82,6 +84,7 @@ class Laser(pygame.sprite.Sprite):
     def __init__(self, player, lifetime, damage):
         super().__init__()
         self.player = player
+        self.team_id = player.team_id
         self.lifetime = lifetime
         self.damage = damage
         self.spawn_time = pygame.time.get_ticks()
@@ -94,6 +97,10 @@ class Laser(pygame.sprite.Sprite):
         self.image = pygame.Surface((1, 1), pygame.SRCALPHA)
         self.rect = self.image.get_rect(center=player.pos)
     def update(self, hittable_sprites, *args, **kwargs):
+        if self.player.active_laser is None:
+            self.kill()
+            return
+
         target_angle = self.player.angle
         self.current_angle += (target_angle - self.current_angle) * 0.01 # Interpolate angle
 
@@ -102,14 +109,13 @@ class Laser(pygame.sprite.Sprite):
         self.end_pos = self.start_pos + pygame.math.Vector2(math.cos(angle_rad), -math.sin(angle_rad)) * 2000
 
         for sprite in hittable_sprites:
+            if hasattr(sprite, 'team_id') and sprite.team_id == self.team_id: continue
             if hasattr(sprite, 'health') and sprite.rect.clipline(self.start_pos, self.end_pos):
                 sprite.health.take_damage(self.damage * 0.1)
 
                 # --- Talisman Integration ---
                 if self.player.talisman:
                     self.player.talisman.on_deal_damage(self.player, sprite, False)
-
-        if pygame.time.get_ticks() - self.spawn_time > self.lifetime: self.kill()
 class WeaponData:
     def __init__(self, held_image_path, attack_type, attack_cooldown, combo_reset_time, attack_data, attack_sprite_class=None, **kwargs):
         self.held_image_path = held_image_path; self.attack_type = attack_type

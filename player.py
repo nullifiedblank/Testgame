@@ -33,7 +33,7 @@ class Player(pygame.sprite.Sprite):
         self.weapon = None; self.combo_counter = 0; self.last_attack_time = 0
         self.active_animation = None; self.bow_anim_timer = 0; self.bow_anim_stage = 0
         self.multi_hit_combo = None; self.multi_hit_counter = 0
-        self.laser_windup_time = 0
+        self.active_laser = None
         self.enemy_sprites = None
 
         # --- Skills ---
@@ -42,6 +42,7 @@ class Player(pygame.sprite.Sprite):
         self.is_invulnerable = False
         self.owner = 'player'
         self.movement_speed_multiplier = 1.0
+        self.team_id = 0
 
         # --- Talismans ---
         self.talisman = None
@@ -116,17 +117,17 @@ class Player(pygame.sprite.Sprite):
         if self.weapon.attack_type == 'LASER':
             if is_attacking and self.energy > 0:
                 self.movement_speed_multiplier = 0.5 # Slow down the player
-                if self.laser_windup_time == 0:
-                    self.laser_windup_time = current_time
+                if self.active_laser is None:
+                    laser_data = self.weapon.attack_data[0].copy()
+                    self.active_laser = self.weapon.attack_sprite_class(player=self, **laser_data)
+                    all_sprites.add(self.active_laser)
 
-                if current_time - self.laser_windup_time > 500: # 0.5 second windup
-                    if current_time - self.last_attack_time > self.weapon.attack_cooldown:
-                        self.energy -= 2
-                        laser_sprite = self.weapon.attack_sprite_class(player=self, **self.weapon.attack_data[0])
-                        all_sprites.add(laser_sprite)
-                        self.last_attack_time = current_time
+                self.energy -= 1
+                if self.energy < 0: self.energy = 0
             else:
-                self.laser_windup_time = 0
+                if self.active_laser:
+                    self.active_laser.kill()
+                    self.active_laser = None
                 self.movement_speed_multiplier = 1.0 # Reset speed
             return
 

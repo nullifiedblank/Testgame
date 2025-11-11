@@ -15,6 +15,7 @@ class Turret(pygame.sprite.Sprite):
         self.mask = pygame.mask.from_surface(self.image)
         self.angle = 0
         self.owner = 'enemy'
+        self.team_id = 1
 
         self.health = Health(self, 50)
         self.speed = 3 # Example speed for future mobile enemies
