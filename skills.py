@@ -136,9 +136,13 @@ class ReboundBallSkill(Skill):
 
     def activate(self):
         if super().activate() and not self.active_ball:
+            angle_rad = math.radians(self.player.angle + 90)
+            direction = pygame.math.Vector2(math.cos(angle_rad), -math.sin(angle_rad))
+            spawn_pos = self.player.pos + direction * 50 # Spawn 50 pixels in front
+
             ball_image = self.asset_manager.get('assets/projectiles/soccer_ball.png')
             self.active_ball = ReboundBall(
-                pos=self.player.pos,
+                pos=spawn_pos,
                 angle=self.player.angle,
                 image=ball_image,
                 speed=500,

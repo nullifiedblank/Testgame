@@ -71,7 +71,6 @@ class ReboundBall(pygame.sprite.Sprite):
         self.owner = owner
         self.team_id = owner.team_id
         self.bounce_count = 0
-        self.has_pierced = False
         self.friction = 0.995 # Slight velocity decay
 
     def update(self, hittable_sprites, player_group, wall_sprites):
@@ -84,36 +83,42 @@ class ReboundBall(pygame.sprite.Sprite):
             self.kill()
             return
 
-        # --- Wall Collision ---
+        # --- Wall & Enemy Collision ---
         collided_walls = pygame.sprite.spritecollide(self, wall_sprites, False)
-        if collided_walls:
-            self.bounce_count += 1
-            if self.bounce_count == 1: self.has_pierced = True # Enable piercing after first bounce
+        enemies_hit = pygame.sprite.spritecollide(self, hittable_sprites, False)
 
+        valid_enemies_hit = []
+        for enemy in enemies_hit:
+            if hasattr(enemy, 'team_id') and enemy.team_id != self.team_id:
+                valid_enemies_hit.append(enemy)
+
+        all_collided_obstacles = collided_walls + valid_enemies_hit
+
+        if all_collided_obstacles:
+            # --- Damage Logic (Non-Piercing) ---
+            if valid_enemies_hit:
+                first_enemy = valid_enemies_hit[0]
+                if hasattr(first_enemy, 'health'):
+                    first_enemy.health.take_damage(self.damage)
+                    if self.owner and hasattr(self.owner, 'talisman') and self.owner.talisman:
+                        self.owner.talisman.on_deal_damage(self.owner, first_enemy)
+
+            # --- Bounce Logic ---
+            self.bounce_count += 1
             if self.bounce_count >= 4:
                 self.kill()
                 return
 
-            # --- Better Reflection Logic ---
             self.pos -= self.velocity # Move back to pre-collision position
+
+            temp_obstacle_group = pygame.sprite.Group(all_collided_obstacles)
 
             # Check for collision on each axis separately
             self.rect.centerx = self.pos.x + self.velocity.x
-            if pygame.sprite.spritecollide(self, wall_sprites, False): self.velocity.x *= -1
+            if pygame.sprite.spritecollide(self, temp_obstacle_group, False):
+                self.velocity.x *= -1
             self.rect.centery = self.pos.y + self.velocity.y
-            if pygame.sprite.spritecollide(self, wall_sprites, False): self.velocity.y *= -1
+            if pygame.sprite.spritecollide(self, temp_obstacle_group, False):
+                self.velocity.y *= -1
 
             self.damage *= 0.75
-
-        # --- Enemy Collision ---
-        collided_enemies = pygame.sprite.spritecollide(self, hittable_sprites, False)
-        for enemy in collided_enemies:
-            if hasattr(enemy, 'team_id') and enemy.team_id != self.team_id:
-                if hasattr(enemy, 'health'):
-                    enemy.health.take_damage(self.damage)
-                    if self.owner and hasattr(self.owner, 'talisman') and self.owner.talisman:
-                        self.owner.talisman.on_deal_damage(self.owner, enemy)
-
-                    if not self.has_pierced:
-                        self.kill()
-                        return

@@ -13,6 +13,7 @@ class EarthWall(pygame.sprite.Sprite):
         super().__init__()
         self.image = image
         self.rect = self.image.get_rect(center=center_pos)
+        self.mask = pygame.mask.from_surface(self.image)
         self.spawn_time = pygame.time.get_ticks()
         self.lifetime = 2500 # 2.5 seconds
 

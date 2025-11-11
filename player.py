@@ -81,15 +81,17 @@ class Player(pygame.sprite.Sprite):
 
     def move_and_collide(self, velocity, wall_sprites):
         self.pos.x += velocity.x
-        self.rect.centerx = self.pos.x
-        for wall in pygame.sprite.spritecollide(self, wall_sprites, False):
+        self.rect.centerx = round(self.pos.x)
+        collided_walls = pygame.sprite.spritecollide(self, wall_sprites, False, pygame.sprite.collide_mask)
+        for wall in collided_walls:
             if velocity.x > 0: self.rect.right = wall.rect.left
             if velocity.x < 0: self.rect.left = wall.rect.right
             self.pos.x = self.rect.centerx
 
         self.pos.y += velocity.y
-        self.rect.centery = self.pos.y
-        for wall in pygame.sprite.spritecollide(self, wall_sprites, False):
+        self.rect.centery = round(self.pos.y)
+        collided_walls = pygame.sprite.spritecollide(self, wall_sprites, False, pygame.sprite.collide_mask)
+        for wall in collided_walls:
             if velocity.y > 0: self.rect.bottom = wall.rect.top
             if velocity.y < 0: self.rect.top = wall.rect.bottom
             self.pos.y = self.rect.centery
