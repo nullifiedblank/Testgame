@@ -32,8 +32,9 @@ class GameScreen:
         self.player_group = pygame.sprite.GroupSingle(self.player)
         self.player.skills["step"] = StepSkill(self.player, self.all_sprites, self.wall_sprites)
         self.player.skills["orogeny"] = OrogenySkill(self.player, self.wall_sprites, self.all_sprites, self.asset_manager)
-        self.player.skills["rebound_ball"] = ReboundBallSkill(self.player, self.projectile_sprites, self.asset_manager)
-        self.hud = HUD(self.player)
+        all_obstacles = pygame.sprite.Group(list(self.wall_sprites) + list(self.enemy_sprites))
+        self.player.skills["rebound_ball"] = ReboundBallSkill(self.player, self.projectile_sprites, self.asset_manager, all_obstacles)
+        self.hud = HUD(self.player, self.asset_manager)
         self.font = pygame.font.Font(None, 22)
 
         # --- Walls ---
@@ -59,9 +60,10 @@ class GameScreen:
         self.turret_instance = turret
 
     def run(self):
-        # ... (run loop is unchanged) ...
         running = True; is_attacking = False
         while running:
+            delta_time = self.clock.tick(settings.FPS) / 1000.0
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT: return 'main_menu'
                 if event.type == pygame.MOUSEBUTTONDOWN:
@@ -71,10 +73,18 @@ class GameScreen:
                             self.player.attack(self.enemy_sprites, self.projectile_sprites, True)
                 if event.type == pygame.MOUSEBUTTONUP:
                     if event.button == 1: is_attacking = False
+                if settings.CAST_ON_RELEASE:
+                    if event.type == pygame.KEYUP:
+                        if event.key == pygame.K_q: self.player.activate_skill("step")
+                        if event.key == pygame.K_e: self.player.activate_skill("orogeny")
+                        if event.key == pygame.K_r: self.player.activate_skill("rebound_ball")
+                else: # Cast on press
+                    if event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_q: self.player.activate_skill("step")
+                        if event.key == pygame.K_e: self.player.activate_skill("orogeny")
+                        if event.key == pygame.K_r: self.player.activate_skill("rebound_ball")
+
                 if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_q: self.player.activate_skill("step")
-                    if event.key == pygame.K_e: self.player.activate_skill("orogeny")
-                    if event.key == pygame.K_r: self.player.activate_skill("rebound_ball")
                     if event.key == pygame.K_ESCAPE: return 'main_menu'
                     if event.key == pygame.K_h:
                         settings.DEBUG_HITBOXES = not settings.DEBUG_HITBOXES
@@ -83,24 +93,24 @@ class GameScreen:
                         self.player.equip_talisman(TALISMANS["frost_amulet"])
                     if event.key == pygame.K_F2:
                         self.player.equip_talisman(TALISMANS["talisman_of_rejuvenation"])
-            self.update(is_attacking)
+
+            self.update(is_attacking, delta_time)
             self.draw()
 
-    def update(self, is_attacking):
-        # ... (update logic is unchanged) ...
+    def update(self, is_attacking, delta_time):
         keys = pygame.key.get_pressed()
         mouse_screen_pos = pygame.mouse.get_pos()
         mouse_world_pos = (mouse_screen_pos[0] - self.camera.camera.x, mouse_screen_pos[1] - self.camera.camera.y)
         self.player.handle_input(keys, mouse_world_pos, self.wall_sprites)
-        self.player.update()
+        self.player.update(delta_time)
         if self.player.weapon and self.player.weapon.attack_type in ['LASER', 'RANGED_CHARGE']:
             self.player.attack(self.enemy_sprites, self.projectile_sprites, is_attacking, self.all_sprites)
         self.camera.update(self.player.rect)
 
         # Update sprites
-        self.all_sprites.update(self.enemy_sprites, self.player_group, self.wall_sprites) # General updates
-        self.projectile_sprites.update(self.enemy_sprites, self.player_group, self.wall_sprites) # Check projectile collisions
-        self.enemy_sprites.update(self.all_sprites, self.projectile_sprites) # Update enemies
+        self.all_sprites.update(self.enemy_sprites, self.player_group, self.wall_sprites, delta_time=delta_time)
+        self.projectile_sprites.update(self.enemy_sprites, self.player_group, self.wall_sprites, delta_time=delta_time)
+        self.enemy_sprites.update(self.all_sprites, self.projectile_sprites, delta_time=delta_time)
 
         if not self.turret_instance.alive() and self.turret_death_time == 0:
             self.turret_death_time = pygame.time.get_ticks()
@@ -151,6 +161,6 @@ class GameScreen:
                     end_pos_cam = self.camera.apply_point(sprite.end_pos)
                     pygame.draw.line(self.screen, (255, 0, 255), start_pos_cam, end_pos_cam, 3)
 
-        self.hud.draw(self.screen)
+        self.hud.draw(self.screen, self.camera)
         pygame.display.flip()
         self.clock.tick(settings.FPS)

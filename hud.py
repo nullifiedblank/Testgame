@@ -13,14 +13,40 @@ class Camera:
         y = -target_rect.centery + int(SCREEN_HEIGHT / 2)
         self.camera.topleft = (x, y)
 
-class HUD:
-    def __init__(self, player):
+class SkillPreview:
+    def __init__(self, player, asset_manager):
         self.player = player
+        self.asset_manager = asset_manager
+
+    def draw(self, surface, camera):
+        if not settings.CAST_ON_RELEASE: return
+
+        keys = pygame.key.get_pressed()
+
+        active_skill = None
+        if keys[pygame.K_q]: active_skill = self.player.skills.get("step")
+        elif keys[pygame.K_e]: active_skill = self.player.skills.get("orogeny")
+        elif keys[pygame.K_r]: active_skill = self.player.skills.get("rebound_ball")
+
+        if active_skill and hasattr(active_skill, 'preview'):
+            active_skill.preview(surface, camera)
+        elif active_skill:
+             player_screen_pos = camera.apply(self.player.rect).center
+             mouse_screen_pos = pygame.mouse.get_pos()
+             pygame.draw.line(surface, WHITE, player_screen_pos, mouse_screen_pos, 2)
+
+class HUD:
+    def __init__(self, player, asset_manager):
+        self.player = player
+        self.asset_manager = asset_manager
         self.font = pygame.font.Font(None, 22)
         self.bar_length, self.bar_height = 200, 20
         self.bar_margin = 10
+        self.skill_preview = SkillPreview(self.player, self.asset_manager)
 
-    def draw(self, surface):
+    def draw(self, surface, camera):
+        self.skill_preview.draw(surface, camera)
+
         # --- Health Bar ---
         health_bar_x = self.bar_margin
         health_bar_y = self.bar_margin

@@ -42,13 +42,13 @@ class Skill:
             return True
         return False
 
-    def update(self):
+    def update(self, *args, **kwargs):
         pass
 
 class StepSkill(Skill):
     def __init__(self, player, all_sprites_group, wall_sprites):
         super().__init__(player, cooldown=4000, energy_cost=15)
-        self.dash_speed = 30
+        self.dash_speed = 1800
         self.dash_duration = 100 # ms
         self.dash_start_time = 0
         self.after_image_group = all_sprites_group
@@ -64,18 +64,19 @@ class StepSkill(Skill):
             return True
         return False
 
-    def update(self):
+    def update(self, *args, **kwargs):
+        delta_time = kwargs.get('delta_time', 1/60.0)
         if self.player.is_dashing:
             current_time = pygame.time.get_ticks()
             if current_time - self.dash_start_time <= self.dash_duration:
                 angle_rad = math.radians(self.player.angle + 90)
                 move_vector = pygame.math.Vector2(math.cos(angle_rad), -math.sin(angle_rad))
-                self.player.pos += move_vector * self.dash_speed
+                self.player.pos += move_vector * self.dash_speed * delta_time
                 self.player.rect.center = self.player.pos
 
                 # --- Wall Collision ---
                 if pygame.sprite.spritecollide(self.player, self.wall_sprites, False):
-                    self.player.pos -= move_vector * self.dash_speed # Move back
+                    self.player.pos -= move_vector * self.dash_speed * delta_time # Move back
                     self.player.rect.center = self.player.pos
                     self.player.is_dashing = False # Stop the dash
                     self.player.is_invulnerable = False
@@ -95,6 +96,28 @@ class OrogenySkill(Skill):
         self.wall_sprites = wall_sprites
         self.all_sprites = all_sprites
         self.asset_manager = asset_manager
+        self.name = "orogeny"
+
+    def preview(self, surface, camera):
+        wall_image_orig = self.asset_manager.get('orogeny')
+        angle = self.player.angle
+        wall_image = pygame.transform.rotate(wall_image_orig, angle + 90)
+        wall_image.set_alpha(128) # Make it semi-transparent
+
+        angle_rad = math.radians(angle + 90)
+        direction = pygame.math.Vector2(math.cos(angle_rad), -math.sin(angle_rad))
+        perp_direction = direction.rotate(90)
+        wall_center = self.player.pos + direction * 64
+
+        positions = [
+            wall_center - perp_direction * 32,
+            wall_center,
+            wall_center + perp_direction * 32
+        ]
+
+        for pos in positions:
+            rect = wall_image.get_rect(center=pos)
+            surface.blit(wall_image, camera.apply(rect))
 
     def activate(self):
         if super().activate():
@@ -128,12 +151,58 @@ class OrogenySkill(Skill):
         return False
 
 class ReboundBallSkill(Skill):
-    def __init__(self, player, projectile_group, asset_manager):
+    def __init__(self, player, projectile_group, asset_manager, all_obstacles):
         super().__init__(player, cooldown=8000, energy_cost=35)
         self.projectile_group = projectile_group
         self.asset_manager = asset_manager
         self.active_ball = None
+        self.name = "rebound_ball"
+        self.all_obstacles = all_obstacles
 
+    def preview(self, surface, camera):
+
+        # --- Simulation Parameters ---
+        sim_steps = 100
+        delta_time = 0.1
+
+        # --- Initial Conditions ---
+        angle_rad = math.radians(self.player.angle + 90)
+        direction = pygame.math.Vector2(math.cos(angle_rad), -math.sin(angle_rad))
+        start_pos = self.player.pos + direction * 50
+        velocity = direction * 500
+
+        path_points = [start_pos]
+        bounce_count = 0
+
+        for i in range(sim_steps):
+            velocity -= velocity * 0.1 * delta_time
+            start_pos += velocity * delta_time
+
+            # --- Collision Check ---
+            sim_ball_rect = pygame.Rect(start_pos.x - 16, start_pos.y - 16, 32, 32)
+
+            collided = False
+            for obstacle in self.all_obstacles:
+                if obstacle.rect.colliderect(sim_ball_rect):
+                    collided = True
+                    break
+
+            if collided:
+                bounce_count += 1
+                if bounce_count >= 4:
+                    break
+
+                start_pos -= velocity * delta_time # Move back
+
+                # Simplified bounce logic for preview
+                velocity.x *= -1
+
+            path_points.append(start_pos)
+
+        # --- Draw Path ---
+        if len(path_points) > 1:
+            path_points_screen = [camera.apply_point(p) for p in path_points]
+            pygame.draw.lines(surface, pygame.Color(255, 255, 0, 100), False, path_points_screen, 2)
     def activate(self):
         if super().activate() and not self.active_ball:
             angle_rad = math.radians(self.player.angle + 90)
@@ -153,7 +222,7 @@ class ReboundBallSkill(Skill):
             return True
         return False
 
-    def update(self):
+    def update(self, *args, **kwargs):
         if self.active_ball and not self.active_ball.alive():
             self.active_ball = None
             return

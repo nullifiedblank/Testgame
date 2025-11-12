@@ -58,7 +58,7 @@ class Player(pygame.sprite.Sprite):
     def equip_talisman(self, talisman):
         self.talisman = talisman
 
-    def handle_input(self, keys, mouse_pos, wall_sprites):
+    def handle_input(self, keys, mouse_pos, wall_sprites, delta_time):
         if self.is_dashing: return
         move_vector = pygame.math.Vector2(0, 0)
         if keys[pygame.K_w]: move_vector.y -= 1
@@ -67,7 +67,7 @@ class Player(pygame.sprite.Sprite):
         if keys[pygame.K_d]: move_vector.x += 1
         if move_vector.length() > 0:
             move_vector.normalize_ip()
-            self.move_and_collide(move_vector * self.speed * self.movement_speed_multiplier, wall_sprites)
+            self.move_and_collide(move_vector * self.speed * self.movement_speed_multiplier * (delta_time * 60), wall_sprites)
 
         dx, dy = mouse_pos[0] - self.pos.x, mouse_pos[1] - self.pos.y
         self.angle = math.degrees(math.atan2(-dy, dx)) - 90
@@ -159,9 +159,9 @@ class Player(pygame.sprite.Sprite):
     def activate_skill(self, skill_name):
         if skill_name in self.skills: self.skills[skill_name].activate()
 
-    def update(self):
+    def update(self, delta_time):
         self.handle_energy_regen()
-        self.update_skills()
+        self.update_skills(delta_time)
         self.handle_bow_animation()
 
         if self.talisman:
@@ -192,8 +192,8 @@ class Player(pygame.sprite.Sprite):
             self.held_weapon.image_orig = self.asset_manager.get(self.weapon.held_image_path)
             self.bow_anim_stage = 0
 
-    def update_skills(self):
-        for skill in self.skills.values(): skill.update()
+    def update_skills(self, delta_time):
+        for skill in self.skills.values(): skill.update(delta_time=delta_time)
 
     def handle_energy_regen(self):
         current_time = pygame.time.get_ticks()

@@ -17,3 +17,4 @@ YELLOW = (255, 255, 0)
 
 # --- Debug Settings ---
 DEBUG_HITBOXES = False
+CAST_ON_RELEASE = True
