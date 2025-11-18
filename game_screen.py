@@ -101,7 +101,7 @@ class GameScreen:
         keys = pygame.key.get_pressed()
         mouse_screen_pos = pygame.mouse.get_pos()
         mouse_world_pos = (mouse_screen_pos[0] - self.camera.camera.x, mouse_screen_pos[1] - self.camera.camera.y)
-        self.player.handle_input(keys, mouse_world_pos, self.wall_sprites)
+        self.player.handle_input(keys, mouse_world_pos, self.wall_sprites, delta_time)
         self.player.update(delta_time)
         if self.player.weapon and self.player.weapon.attack_type in ['LASER', 'RANGED_CHARGE']:
             self.player.attack(self.enemy_sprites, self.projectile_sprites, is_attacking, self.all_sprites)
